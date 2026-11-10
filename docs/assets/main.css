@@ -24,3 +24,5 @@ button,input{font:inherit}button{cursor:pointer}button:disabled{opacity:.4;curso
 footer{justify-content:space-between;gap:16px;margin-top:25px;font-size:10px;color:#8099b5}.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#294c59;border:1px solid #6ecfbd;color:#e8fffa;padding:12px 18px;border-radius:11px;max-width:90vw;white-space:normal;font-size:12px;z-index:10}
 @keyframes up{from{opacity:.5;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
 @media(max-width:375px){.app{padding-left:13px;padding-right:13px}.brand strong{font-size:13px}.badge{font-size:9px}.swap-card,.track-card,.info-card{padding:17px 14px}.tab{font-size:11px}}
+
+body:before{content:'STAGING · NO REAL FUNDS';position:fixed;z-index:99;top:0;left:0;right:0;padding:5px;text-align:center;background:#784b15;color:#ffe4a1;font-size:10px;font-weight:900;letter-spacing:.12em;pointer-events:none}

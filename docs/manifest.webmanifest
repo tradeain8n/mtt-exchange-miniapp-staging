@@ -1,6 +1,6 @@
 {
-  "name": "Baby MTT Exchange",
-  "short_name": "Baby MTT",
+  "name": "GiftMutant Staging",
+  "short_name": "GiftMutant Dev",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#0b111c",

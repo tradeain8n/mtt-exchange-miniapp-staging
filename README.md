@@ -1,38 +1,11 @@
-# Baby MTT Exchange — Telegram Mini App
+# GiftMutantBot — isolated development / staging
 
-Bot: https://t.me/babymttbot
-Mini App: https://tradeain8n.github.io/mtt-exchange-miniapp/
-Private backend: https://github.com/tradeain8n/mtt-exchange-engine
+Telegram bot: https://t.me/GiftMutantBot
+Mini App (separate GitHub Pages): https://tradeain8n.github.io/mtt-exchange-miniapp-staging/
 
-## Состояние
+STAGING — never send real USDT to any address shown here. This repository has no production wallet keys and no secrets.
 
-Клиентский интерфейс без демонстрационных операций и пилотных ограничений: текущая котировка по MTT Router, ручная отправка или подключённый EVM-кошелёк, проверка BSC-хеша и статуса выплаты.
+The GitHub Actions secret GIFT_MUTANT_BOT_TOKEN is NOT provisioned automatically. Install the token privately via Termux command gh secret set GIFT_MUTANT_BOT_TOKEN -R tradeain8n/mtt-exchange-miniapp-staging, then manually run Configure Telegram Mini App menu.
 
-Важно: сайт НЕ принимает новые средства, пока публичный финансовый процессор не подтвердит состояние accepting=true. По умолчанию docs/config.json содержит apiBaseUrl=null; депозитный адрес и кнопка отправки скрыты. Это намеренная блокировка для защиты клиентов от зависших платежей.
-
-## Состав интерфейса
-
-- Обмен: сумма 1–20 USDT BEP-20, ожидаемые MTT по ликвидности AMM, плавающий курс.
-- Мой перевод: проверка реальной BSC-транзакции, 12 подтверждений, статусы моста/Router/выплаты при доступном backend.
-- Как работает: реальный маршрут без заявок.
-
-Убраны старые тестовые экраны, симуляция выплат, локальная фальшивая история, устаревший публичный sandbox-backend, webhook-мок и персональная привязка к одному тестовому кошельку.
-
-## Развёртывание
-
-Публичная статика публикуется через GitHub Pages. Отдельный backend из приватного mtt-exchange-engine должен быть развёрнут на надёжном сервере, с собственным HTTPS-доменом и защищённым сервисом подписания.
-
-Когда backend стабильно отвечает GET /api/health и подтверждает accepting=true при реальной работе worker:
-1. В docs/config.json задайте HTTPS apiBaseUrl своего backend.
-2. Выполните публикацию GitHub Pages и CI.
-3. Запустите GitHub Actions: Configure Telegram Mini App menu.
-4. Проверьте, что кнопка оплаты появляется только при состоянии accepting=true.
-5. Проведите ограниченный контрольный перевод с новым адресом до публичного запуска.
-
-Команды проверки в проекте:
-    npm test
-    npm run check
-
-Токены Telegram и приватные ключи никогда не добавляются в публичные JavaScript/HTML или репозиторий.
-
-Токен бота, который когда-либо размещался в открытой переписке, необходимо перевыпустить через BotFather до массового запуска.
+Main project: https://github.com/tradeain8n/mtt-exchange-miniapp/
+Promotion pipeline: stage -> automated tests -> release reviewed -> production GitHub Pages.

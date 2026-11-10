@@ -16,6 +16,6 @@ jobs:
         run: node --check scripts/configure_bot.mjs
       - name: Set Telegram bot menu
         env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          MINIAPP_URL: https://tradeain8n.github.io/mtt-exchange-miniapp/
+          TELEGRAM_BOT_TOKEN: ${{ secrets.GIFT_MUTANT_BOT_TOKEN }}
+          MINIAPP_URL: https://tradeain8n.github.io/mtt-exchange-miniapp-staging/
         run: node scripts/configure_bot.mjs

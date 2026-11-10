@@ -1,6 +1,1 @@
-{
-  "apiBaseUrl": null,
-  "exchangeState": "closed_until_settlement_backend_verified",
-  "network": "BNB Smart Chain",
-  "version": "1.0.0"
-}
+{"apiBaseUrl":null,"exchangeState":"staging_offline","network":"BNB Smart Chain","version":"staging-1.0.0"}

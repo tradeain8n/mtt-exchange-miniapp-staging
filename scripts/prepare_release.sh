@@ -10,7 +10,7 @@ git clone -q "https://github.com/$TARGET.git" "$TMP/prod"
 cd "$TMP/prod"
 git checkout -q -b "$BRANCH"
 # Explicit allowlist: staging branding and config never cross to production.
-for file in docs/assets/chain.js docs/assets/quote.js tests/chain.test.mjs; do
+for file in docs/assets/chain.js docs/assets/quote.js tests/chain.test.mjs tests/quote.test.mjs; do
   if test -f "$STAGING/$file"; then
     mkdir -p "$(dirname "$file")"
     cp "$STAGING/$file" "$file"
@@ -22,7 +22,7 @@ if git diff --quiet; then
 fi
 npm test
 npm run check
-git add docs/assets/chain.js docs/assets/quote.js tests/chain.test.mjs
+git add docs/assets/chain.js docs/assets/quote.js tests/chain.test.mjs tests/quote.test.mjs
 git commit -m "Propose audited shared logic from GiftMutant staging"
 git push -u origin "$BRANCH"
 gh pr create -R "$TARGET" -B main -H "$BRANCH" \

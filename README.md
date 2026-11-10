@@ -9,3 +9,9 @@ The GitHub Actions secret GIFT_MUTANT_BOT_TOKEN is NOT provisioned automatically
 
 Main project: https://github.com/tradeain8n/mtt-exchange-miniapp/
 Promotion pipeline: stage -> automated tests -> release reviewed -> production GitHub Pages.
+
+Release shared quote and chain modules without staging branding by running:
+```bash
+bash scripts/prepare_release.sh
+```
+The command opens a reviewable production pull request; it does not merge or deploy.

@@ -53,3 +53,12 @@ Telegram поддерживает отдельные механизмы:
 - https://core.telegram.org/api/links
 
 Дальнейшие идеи: официальный партнёрский MTT SPORTS OAuth / Telegram bot SSO; собственный Main Mini App Baby MTT; проверяемый интерфейс выбора игрового EVM-кошелька.
+
+## Независимая проверка GitHub Actions
+- Ссылка на запуск: https://github.com/tradeain8n/mtt-exchange-miniapp-staging/actions/runs/43113803415
+- GitHub Actions: **PASS**, тестовый бот подтверждён как @GiftMutantBot.
+- Bot API getMe: **has_main_web_app=false**.
+- Bot API getChatMenuButton: установлен web_app на GitHub Pages Baby MTT staging.
+- Следовательно, у тестового бота включён только Menu Button, но **Main Mini App ещё не настроен**.
+- Последующее включение Main Mini App выполняется владельцем через @BotFather; после него нужно снова проверить getMe.has_main_web_app=true.
+- Наличие Main Mini App не означает разрешение MTT SPORTS на SSO через нашего бота. Для этого нужно доверие/интеграция со стороны MTT SPORTS.

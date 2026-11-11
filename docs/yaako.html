@@ -1,83 +1,139 @@
 <!doctype html>
 <html lang="ru">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#101b2d">
-  <meta name="robots" content="noindex,nofollow">
-  <title>Baby MTT V2 · Yaako — тестовый вход</title>
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <style>
-    :root{color-scheme:dark;font:16px/1.5 system-ui,-apple-system,Arial,sans-serif;color:#f4f7ff;background:#0e192a}
-    *{box-sizing:border-box}body{margin:0}main{max-width:550px;margin:auto;padding:22px 18px 60px}
-    header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 32px}
-    .brand{font-weight:900;letter-spacing:.08em;font-size:18px}.brand span{display:block;letter-spacing:.16em;font-size:10px;color:#a5b9cf}
-    .chip{background:#244239;color:#99ffe0;border-radius:9px;padding:6px 10px;font-size:11px;font-weight:800}
-    h1{font-size:30px;line-height:1.13;letter-spacing:-.03em;margin:0 0 12px}h2{font-size:18px;margin:0 0 12px}
-    p{margin:6px 0 12px}.sub{color:#acbdd4;font-size:14px;line-height:1.65}
-    .panel{border:1px solid #344965;background:#18283e;border-radius:22px;padding:22px 18px;margin:20px 0}
-    .wallet-head{display:flex;align-items:center;gap:12px;margin:0 0 20px}.logo{border-radius:16px;width:52px;height:52px;background:#453fff;display:grid;place-items:center;font-weight:900;font-size:28px}
-    .wallet-head strong{font-size:21px}.wallet-head small{display:block;color:#9fb2c7;font-size:12px}
-    .btn{display:flex;justify-content:center;align-items:center;text-align:center;width:100%;text-decoration:none;border-radius:13px;padding:15px;min-height:52px;font:700 15px system-ui;cursor:pointer}
-    .primary{background:#39e8b0;color:#08231c;border:0}.secondary{background:#273d57;color:#f0f7ff;border:1px solid #42617e}.tertiary{background:transparent;color:#b9cee5;border:1px solid #344965}
-    .btn+.btn{margin-top:10px}.hint{background:#162d38;color:#b5e5dc;border:1px solid #2b665f;border-radius:12px;padding:12px 13px;font-size:13px;line-height:1.55}
-    .muted{color:#96a8bd;font-size:12px}.hidden{display:none}.row{display:flex;align-items:start;gap:12px;margin:12px 0}
-    .num{background:#2a3f58;color:#b8fadd;font-size:13px;font-weight:900;min-width:28px;height:28px;border-radius:50%;display:grid;place-items:center}
-    input{background:#112034;border:1px solid #52728e;color:#fff;font:15px monospace;border-radius:12px;padding:14px;width:100%}
-    .error{color:#ffacac;font-size:13px}.good{color:#7aebbf;font-size:13px}
-    footer{text-align:center;color:#8698ae;font-size:12px;margin-top:24px}
-    a.link{color:#a6f5db}
-  </style>
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+ <meta name="theme-color" content="#101b2d">
+ <meta name="robots" content="noindex,nofollow">
+ <title>Baby MTT · Yaako — тестовая регистрация</title>
+ <script src="https://telegram.org/js/telegram-web-app.js"></script>
+ <style>
+ :root{color-scheme:dark;font:16px/1.5 system-ui,-apple-system,Arial,sans-serif;color:#f4f7ff;background:#0e192a}
+ *{box-sizing:border-box}body{margin:0}main{max-width:550px;margin:auto;padding:22px 18px 60px}
+ header{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:28px}
+ .brand{font-size:18px;font-weight:900;letter-spacing:.08em}.brand small{display:block;font-size:10px;color:#a5b9cf;letter-spacing:.16em}
+ .chip{background:#244239;color:#99ffe0;border-radius:9px;padding:6px 10px;font-size:11px;font-weight:800}
+ h1{font-size:29px;line-height:1.15;letter-spacing:-.03em;margin:0 0 12px}h2{font-size:19px;margin:0 0 12px}
+ p{margin:8px 0 12px}.sub{color:#acbdd4;font-size:14px;line-height:1.65}
+ .panel{border:1px solid #344965;background:#18283e;border-radius:22px;padding:22px 18px;margin:20px 0}
+ .wallet-head{display:flex;align-items:center;gap:12px;margin:0 0 20px}.logo{border-radius:16px;width:52px;height:52px;background:#453fff;display:grid;place-items:center;font-weight:900;font-size:28px}
+ .wallet-head strong{font-size:21px}.wallet-head small{display:block;color:#9fb2c7;font-size:12px}
+ .btn{display:flex;justify-content:center;align-items:center;text-align:center;width:100%;text-decoration:none;border-radius:13px;padding:15px;min-height:52px;font:700 15px system-ui;cursor:pointer}
+ .primary{background:#39e8b0;color:#08231c;border:0}.secondary{background:#273d57;color:#f0f7ff;border:1px solid #42617e}.tertiary{background:transparent;color:#b9cee5;border:1px solid #344965}
+ .btn+.btn{margin-top:10px}.btn:disabled{opacity:.55}.hint{background:#162d38;color:#b5e5dc;border:1px solid #2b665f;border-radius:12px;padding:12px 13px;font-size:13px;line-height:1.55}
+ .muted{color:#96a8bd;font-size:12px}.hidden{display:none!important}.row{display:flex;align-items:start;gap:12px;margin:12px 0}
+ .num{background:#2a3f58;color:#b8fadd;font-size:13px;font-weight:900;min-width:28px;height:28px;border-radius:50%;display:grid;place-items:center}
+ input{background:#112034;border:1px solid #52728e;color:#fff;font:15px monospace;border-radius:12px;padding:14px;width:100%}
+ .error{color:#ffacac;font-size:13px}.good{color:#7aebbf;font-size:13px}
+ footer{text-align:center;color:#8698ae;font-size:12px;margin-top:24px}a.link{color:#a6f5db}
+ .modal{position:fixed;inset:0;background:#07111de8;z-index:30;display:flex;align-items:center;justify-content:center;padding:10px}
+ .modal-card{background:#122239;border:1px solid #426078;border-radius:20px;width:min(650px,100%);max-height:97vh;overflow:auto;padding:15px;box-shadow:0 20px 60px #0009}
+ .modal-top{display:flex;align-items:start;justify-content:space-between;gap:12px}.modal-top h2{margin:0 0 4px}
+ .modal-top button{min-width:38px;height:38px;border:1px solid #648198;border-radius:10px;color:#fff;background:#233b54;font-size:24px}
+ iframe{height:min(56vh,680px);width:100%;background:white;border-radius:10px;border:1px solid #63809b;margin:12px 0}
+ .modal .btn{min-height:44px;padding:12px;font-size:14px}body.modal-open{overflow:hidden}
+ </style>
 </head>
 <body>
 <main>
- <header><div class="brand">BABY MTT<span>EXCHANGE · V2</span></div><span class="chip">ТЕСТ · БЕЗ ПЛАТЕЖЕЙ</span></header>
- <p class="sub">ШАГ 1 ИЗ 2 · ПЕРВОЕ ПОСЕЩЕНИЕ</p>
- <h1>Куда вы хотите получать MTT?</h1>
- <p class="sub">Предлагаем создать кошелёк Yaako. Его можно использовать отдельно от Baby MTT и покерного аккаунта.</p>
+ <header><div class="brand">BABY MTT<small>EXCHANGE · V2</small></div><span class="chip">ТЕСТ · БЕЗ ПЛАТЕЖЕЙ</span></header>
+ <p class="sub">ПЕРВОЕ ПОСЕЩЕНИЕ · ШАГ 1</p>
+ <h1>Подключите Yaako</h1>
+ <p class="sub">Yaako может хранить MTT и использоваться вместе с MTT SPORTS. Можно продолжить без него.</p>
  <section id="offer" class="panel">
-   <div class="wallet-head"><div class="logo">Y</div><div><strong>Yaako Wallet</strong><small>Внешний кошелёк · самостоятельная регистрация</small></div></div>
-   <div class="hint">Регистрация проводится в официальном приложении Yaako. Baby MTT не запрашивает пароль, seed-фразу или приватный ключ.</div>
-   <a class="btn primary" href="https://yaako.io/" target="_blank" rel="noopener noreferrer">Создать Yaako · официальный сайт</a>
-   <button type="button" id="existing" class="btn secondary">У меня уже есть Yaako</button>
+   <div class="wallet-head"><div class="logo">Y</div><div><strong>Yaako Wallet</strong><small>Внешний кошелёк · официальный вход</small></div></div>
+   <p class="hint">Регистрация проходит только на домене yaako.io. Пароли, Google/Apple-токены, seed-фразы и приватные ключи не попадают в Baby MTT.</p>
+   <button type="button" id="launch-yaako" class="btn primary">Войти / зарегистрироваться в Yaako</button>
+   <button type="button" id="probe" class="btn secondary">Подключить существующий Yaako</button>
+   <p id="provider-status" class="muted" role="status">Попробуем обнаружить настоящий EVM-провайдер кошелька. В Telegram он может быть недоступен.</p>
+   <button type="button" id="existing" class="btn tertiary">Указать адрес Yaako вручную</button>
    <button type="button" id="skip" class="btn tertiary">Продолжить с Baby MTT без Yaako</button>
  </section>
  <section id="manual" class="panel hidden">
-   <h2>Указать кошелёк Yaako</h2>
-   <div class="row"><div class="num">1</div><p class="sub">В Yaako найдите «Получить» для сети MTT Network и скопируйте публичный адрес.</p></div>
-   <div class="row"><div class="num">2</div><p class="sub">Вставьте адрес для проверки его формата.</p></div>
+   <h2>Адрес получения MTT</h2>
+   <div class="row"><div class="num">1</div><p class="sub">В Yaako откройте «Получить» → MTT Network (6880) и скопируйте публичный EVM-адрес.</p></div>
+   <div class="row"><div class="num">2</div><p class="sub">Вставьте только адрес. Привязка без подписи пока не подтверждает владение кошельком.</p></div>
    <label class="sub" for="address">Публичный EVM-адрес</label>
-   <input id="address" type="text" placeholder="0x..." maxlength="42" autocomplete="off" autocapitalize="off" spellcheck="false">
-   <p id="result" aria-live="polite" class="muted">Никакие секреты сюда вводить нельзя.</p>
-   <button type="button" id="send" class="btn primary">Скопировать адрес и перейти в Telegram</button>
-   <p class="muted">Бот попросит вставить адрес в чат. Подтверждение владения кошельком — следующий этап; пока это только ввод адреса.</p>
-   <button type="button" id="back" class="btn tertiary">Назад к выбору</button>
+   <input id="address" type="text" placeholder="0x..." maxlength="42" autocomplete="off" spellcheck="false" autocapitalize="off">
+   <p id="result" class="muted" role="status">Никогда не вводите сюда seed-фразу или приватный ключ.</p>
+   <button type="button" id="send" class="btn primary">Скопировать адрес и вернуться в Telegram</button>
+   <button type="button" id="back" class="btn tertiary">Назад</button>
  </section>
- <footer>MTT Network · Chain ID 6880<br>Тестовый сценарий. Кошельки, депозиты и обмены не запускаются.<br><a class="link" href="https://yaako.io/" target="_blank" rel="noopener noreferrer">Сайт Yaako</a></footer>
+ <footer>MTT Network · Chain ID 6880 · Без реальных обменов<br><a href="https://yaako.io/" class="link" target="_blank" rel="noopener noreferrer">Официальный сайт Yaako</a></footer>
 </main>
-<script>
+<section id="login-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+ <div class="modal-card">
+   <div class="modal-top">
+     <div><h2 id="modal-title">Регистрация в Yaako</h2><p class="muted">Официальный домен: yaako.io</p></div>
+     <button id="close-modal" type="button" aria-label="Закрыть окно регистрации">×</button>
+   </div>
+   <p class="hint">Встроенный официальный экран. Google и Apple могут ограничивать вход внутри iframe или Telegram. Если окно пустое или вход не сработал, откройте Yaako отдельно.</p>
+   <iframe id="yaako-frame" title="Официальная регистрация Yaako (yaako.io)"
+     referrerpolicy="no-referrer"
+     sandbox="allow-forms allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation"></iframe>
+   <button type="button" id="external-login" class="btn primary">Открыть официальный Yaako отдельно</button>
+   <button type="button" id="login-done" class="btn secondary">Я вошёл в Yaako · продолжить</button>
+   <p class="muted">Сервис Baby MTT не читает данные страницы Yaako. Возврат из регистрации не является доказательством владения адресом.</p>
+ </div>
+</section>
+<script type="module">
+ import {connectYaako,OFFICIAL_YAAKO_LOGIN} from './assets/yaako-provider.js';
  const tg=window.Telegram?.WebApp;
  tg?.ready();tg?.expand();
  const el=id=>document.getElementById(id);
  const bot='https://t.me/GiftMutantBot?start=';
- function openBot(option){
+ function openBot(option) {
    const url=bot+option;
-   if(tg?.openTelegramLink)tg.openTelegramLink(url);
-   else window.location.href=url;
+   if(tg?.openTelegramLink)tg.openTelegramLink(url);else window.location.href=url;
  }
- el('existing').onclick=()=>{el('offer').classList.add('hidden');el('manual').classList.remove('hidden');};
+ function showManual() {el('offer').classList.add('hidden');el('manual').classList.remove('hidden');}
+ function showLogin(open) {
+   el('login-modal').classList.toggle('hidden',!open);
+   document.body.classList.toggle('modal-open',open);
+   if(open)el('yaako-frame').src=OFFICIAL_YAAKO_LOGIN;
+   else el('yaako-frame').removeAttribute('src');
+ }
+ el('launch-yaako').onclick=()=>showLogin(true);
+ el('close-modal').onclick=()=>showLogin(false);
+ el('login-done').onclick=()=>{showLogin(false);showManual();};
+ el('external-login').onclick=()=>{
+   if(tg?.openLink)tg.openLink(OFFICIAL_YAAKO_LOGIN);
+   else window.open(OFFICIAL_YAAKO_LOGIN,'_blank','noopener,noreferrer');
+ };
+ el('probe').onclick=async()=>{
+   el('probe').disabled=true;
+   el('provider-status').textContent='Обнаружение Yaako (EIP-6963)…';
+   try {
+     const connected=await connectYaako(window);
+     if(connected.address) {
+       showManual();
+       el('address').value=connected.address;
+       el('result').textContent=connected.status==='connected_unverified'
+         ?'Адрес получен. Владение НЕ подтверждено: проверка подписи будет отдельным шагом.'
+         :'Кошелёк обнаружен, но сеть отличается от MTT Network 6880. Проверьте сеть.';
+       el('result').className=connected.status==='connected_unverified'?'good':'error';
+     } else {
+       el('provider-status').textContent=connected.status==='unavailable'
+         ?'Yaako не обнаружен в этом браузере. Откройте официальный Yaako и скопируйте адрес.'
+         :'Подключение не завершено. Вы можете указать публичный адрес вручную.';
+     }
+   } catch {
+     el('provider-status').textContent='Ошибка подключения. Используйте ручной ввод адреса.';
+   } finally {el('probe').disabled=false;}
+ };
+ el('existing').onclick=showManual;
  el('back').onclick=()=>{el('manual').classList.add('hidden');el('offer').classList.remove('hidden');};
  el('skip').onclick=()=>openBot('baby');
  el('send').onclick=async()=>{
    const val=el('address').value.trim();
-   if(!/^0x[0-9a-fA-F]{40}$/.test(val)){
-     el('result').textContent='Неверный формат. Требуется 0x и 40 шестнадцатеричных символов.';
+   if(!/^0x[0-9a-fA-F]{40}$/.test(val)) {
+     el('result').textContent='Неверный формат публичного EVM-адреса. Нужны 0x и 40 шестнадцатеричных символов.';
      el('result').className='error';return;
    }
-   el('result').textContent='Формат адреса подходит; владение НЕ подтверждено. Скопируйте адрес и отправьте его боту.';
+   el('result').textContent='Адрес скопирован для отправки боту. Владение пока НЕ подтверждено.';
    el('result').className='good';
    try{await navigator.clipboard.writeText(val);}catch{
-     el('result').textContent+=' Если копирование не сработало, скопируйте вручную.';
+     el('result').textContent+=' Если буфер обмена недоступен, скопируйте адрес вручную.';
    }
    openBot('yaako');
  };

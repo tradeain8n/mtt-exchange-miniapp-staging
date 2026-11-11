@@ -7,7 +7,7 @@
 - Recipient: the user's MTT SPORTS Web3 EVM address, expected (but not yet
   proven) to match the existing Yaako Wallet receiving address.
 - Referral registration: https://mtt.xyz/?i=ba434b5a
-- Official MTT SPORTS Telegram bot: https://t.me/MTTSPORTS_bot
+- Another MTT-branded referral bot (official status unconfirmed): https://t.me/MTTSPORTS_bot
 
 NO PAYMENT IS ENABLED. Public endpoint availability is not a quote or proof
 of supported bridging, referral attribution or MTT SPORTS authorization.
@@ -89,7 +89,7 @@ The read-only report returned **10/10 PASS**:
 1. Referral URL contains the user-provided code i=ba434b5a.
 2. Referral landing page mtt.xyz: HTTP 200.
 3. MTT SPORTS web client sports.mtt.xyz: HTTP 200.
-4. @MTTSPORTS_bot public Telegram page: HTTP 200.
+4. Third-party @MTTSPORTS_bot public Telegram page: HTTP 200 (not proof of affiliation).
 5. Yaako public login account.yaako.io: HTTP 200.
 6. MTT Network public RPC eth_chainId: 0x1ae0 (6880).
 7. Supabase EVM-link API rejects an invalid ticket: HTTP 401.

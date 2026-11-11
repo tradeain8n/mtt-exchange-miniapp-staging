@@ -69,3 +69,50 @@ production financial workers and Hermes collective memory untouched.
    address linking API instead of treating a local login as shared identity.
 2. Live USDT TON to native MTT route quotation with fees/minimum checks.
 3. Verified recipient picker for Yaako, MTT SPORTS and Baby MTT EVM addresses.
+
+
+## Confirmed GitHub Actions acceptance (2026-11-11)
+
+Code was merged through:
+- Engine PR #8: https://github.com/tradeain8n/mtt-exchange-engine-staging/pull/8
+- Mini App PR #9: https://github.com/tradeain8n/mtt-exchange-miniapp-staging/pull/9
+
+Real Action runs:
+- Backend EVM / Telegram regression CI:
+  https://github.com/tradeain8n/mtt-exchange-engine-staging/actions/runs/43079841274 — PASS
+- Test Telegram menu update:
+  https://github.com/tradeain8n/mtt-exchange-miniapp-staging/actions/runs/43079924765 — PASS
+- Read-only MTT SPORTS / Yaako / Supabase readiness:
+  https://github.com/tradeain8n/mtt-exchange-miniapp-staging/actions/runs/43079931488 — PASS
+
+The read-only report returned **10/10 PASS**:
+1. Referral URL contains the user-provided code i=ba434b5a.
+2. Referral landing page mtt.xyz: HTTP 200.
+3. MTT SPORTS web client sports.mtt.xyz: HTTP 200.
+4. @MTTSPORTS_bot public Telegram page: HTTP 200.
+5. Yaako public login account.yaako.io: HTTP 200.
+6. MTT Network public RPC eth_chainId: 0x1ae0 (6880).
+7. Supabase EVM-link API rejects an invalid ticket: HTTP 401.
+8. Test Bot API identity is @GiftMutantBot, not the production bot.
+9. Bot command list includes start, mttsports, mttsportscheck, linkstatus and recipient.
+10. Bot Web App menu points only to our staging GitHub Pages host.
+
+None of these is proof of a *specific user's successful MTT SPORTS login* or of
+referral reward attribution. The user confirms login by clicking the second
+Telegram button; no account, cookies or personally identifying details are
+transmitted into GitHub Actions.
+
+Financial route **3.3 USDT on TON -> native MTT on chain 6880 remains UNQUOTED
+and DISABLED** until a live executable route, fees, minimum amount, token
+identifiers, and a confirmed final recipient are verified.
+
+Important possible mismatch: prior user screenshots displayed differing
+shortened Yaako and MTT SPORTS EVM addresses. Full receiving-address equality
+must be checked manually; shared application login is insufficient.
+
+Next acceptance:
+- User opens @GiftMutantBot, sends a new /start, taps MTT SPORTS referral.
+- After official login, returns and taps "Я вошёл ... запустить автопроверку".
+- Bot returns a fresh Actions URL, which includes the full report in Summary.
+- Only afterwards compare MTT SPORTS and Yaako full EVM addresses and test
+  permitted EIP-191 ownership proof; no real transfers.

@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="ru">
+<head>
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+ <meta name="robots" content="noindex,nofollow,noarchive">
+ <meta name="referrer" content="no-referrer">
+ <meta name="theme-color" content="#0e192a">
+ <script src="https://telegram.org/js/telegram-web-app.js"></script>
+ <script type="module" defer src="./assets/yaako-link.js"></script>
+ <title>Baby MTT · Подключить EVM-кошелёк</title>
+ <style>
+ :root{color-scheme:dark;font:15px/1.5 system-ui,-apple-system,Segoe UI,sans-serif;background:#0c1424;color:#f4f9ff}
+ *{box-sizing:border-box}body{margin:0}.wrap{max-width:560px;margin:auto;padding:24px 17px 70px}
+ header{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:28px}
+ .brand{font-weight:900;font-size:19px;letter-spacing:.04em}.brand small{display:block;color:#a6b9cf;letter-spacing:.14em;font-size:10px}
+ .tag{background:#1c453f;color:#a2f5d4;font-size:11px;border-radius:8px;padding:7px 10px;font-weight:800}
+ h1{font-size:28px;line-height:1.12;letter-spacing:-.03em;margin:0 0 12px}
+ h2{font-size:18px;margin:0 0 10px}
+ .intro{color:#9bb0c9;line-height:1.6;margin:0 0 22px}
+ .panel{background:#18253a;border:1px solid #384c67;border-radius:19px;padding:20px 17px;margin:15px 0}
+ .step{color:#91e9cd;font-weight:750;font-size:11px;letter-spacing:.12em;margin:0 0 10px}
+ .sub{color:#aebdd0;font-size:13px;line-height:1.55}
+ .btn{display:block;width:100%;padding:14px 15px;min-height:51px;border-radius:12px;border:0;text-align:center;text-decoration:none;font:700 15px system-ui;cursor:pointer}
+ .btn+.btn{margin-top:10px}.btn:disabled{opacity:.46;cursor:not-allowed}
+ .primary{background:#5fe0bc;color:#06281f}.secondary{background:#273b55;color:#f1f8ff;border:1px solid #46617a}
+ .plain{background:transparent;color:#c7d9ed;border:1px solid #52657c}
+ .note{background:#122e31;border:1px solid #28565d;border-radius:12px;padding:12px;color:#b0e4db;font-size:12px}
+ label{display:block;font-size:12px;color:#aabdd4;margin:15px 0 7px}
+ input,textarea{background:#0f1b2e;color:#eaf5ff;border:1px solid #42627e;width:100%;border-radius:12px;padding:13px;font:14px/1.5 ui-monospace,monospace;outline:none}
+ textarea{min-height:160px;resize:vertical}input:focus,textarea:focus{border-color:#74dec6}
+ .hidden{display:none}.status{white-space:pre-wrap;word-break:break-word;font-size:13px;line-height:1.55;color:#b9d2ea}
+ .success{color:#74ebbf}.warning{color:#ffca85}.error{color:#ffb0a9}
+ .address{word-break:break-all;font:14px/1.5 ui-monospace,monospace}
+ .line{height:1px;background:#2a3d53;margin:16px 0}
+ footer{font-size:11px;color:#778ca6;text-align:center;margin-top:22px}
+ a{color:#85ddc7}
+ </style>
+</head>
+<body><main class="wrap">
+<header><div class="brand">BABY MTT<small>EXCHANGE · WALLET LINK</small></div><span class="tag">ТЕСТ · БЕЗ ПЛАТЕЖЕЙ</span></header>
+<h1>Подключить адрес Yaako</h1>
+<p class="intro">Подтверди владение своим EVM-адресом MTT Network. Никаких переводов, комиссий и приватных ключей.</p>
+
+<section class="panel">
+ <div class="step">ШАГ 1 · TELEGRAM</div>
+ <h2>Связь с Telegram</h2>
+ <p id="telegram-status" class="status">Проверяем подписанный запрос…</p>
+ <p class="sub">Ссылка действует 10 минут. Если истекла — вернись в бота и отправь новый /start.</p>
+</section>
+
+<section class="panel">
+ <div class="step">ШАГ 2 · EVM / YAAKO</div>
+ <h2>Подпись кошелька</h2>
+ <p class="sub">Лучше открывать эту страницу во встроенном DApp-браузере Yaako, если он доступен. В Telegram WebView EVM-провайдер может отсутствовать.</p>
+ <button type="button" class="btn primary" id="connect">Обнаружить и подключить EVM-кошелёк</button>
+ <button type="button" class="btn secondary" id="copy-link">Скопировать временную ссылку для DApp-браузера</button>
+ <p id="provider-status" class="status" role="status"></p>
+ <div class="line"></div>
+ <label for="address">Публичный EVM-адрес из Yaako · MTT Network 6880</label>
+ <input id="address" type="text" placeholder="0x..." maxlength="42" spellcheck="false" autocapitalize="off" autocomplete="off">
+ <button type="button" class="btn secondary" id="challenge">Получить одноразовое сообщение</button>
+ <div id="proof-area" class="hidden">
+   <label for="message">Сообщение для подписи (ничего в нём не меняй)</label>
+   <textarea id="message" readonly></textarea>
+   <button type="button" class="btn primary" id="sign">Подписать в подключённом кошельке</button>
+   <button type="button" class="btn plain" id="copy-message">Скопировать сообщение</button>
+   <label for="signature">Или вставь готовую EIP-191 подпись (0x…)</label>
+   <input id="signature" type="text" placeholder="0x..." spellcheck="false" autocapitalize="off" autocomplete="off">
+   <button type="button" class="btn secondary" id="verify">Проверить подпись на сервере</button>
+ </div>
+ <p id="proof-status" class="status" role="status"></p>
+ <p class="note">Подпись доказывает владение EVM-адресом, но не удостоверяет статус игрового профиля MTT SPORTS. Никогда не вводи здесь seed-фразу или приватный ключ.</p>
+</section>
+
+<section class="panel">
+ <div class="step">ШАГ 3 · ПОДТВЕРЖДЕНИЕ В TELEGRAM</div>
+ <h2>Выбрать получателя MTT</h2>
+ <p id="link-status" class="status">После проверки подписи потребуется подтвердить адрес в чате Telegram.</p>
+ <button type="button" class="btn secondary" id="refresh">Обновить статус</button>
+ <button type="button" class="btn primary" id="copy-approve" disabled>Скопировать команду подтверждения</button>
+ <a class="btn plain" href="https://t.me/GiftMutantBot" id="back-to-bot">Вернуться в тестового бота</a>
+</section>
+<footer>Подключение адреса — только тест. Приложение не выполняет обмены или переводы токенов. <a href="https://yaako.io/" target="_blank" rel="noopener noreferrer">Официальный Yaako</a></footer>
+</main></body></html>

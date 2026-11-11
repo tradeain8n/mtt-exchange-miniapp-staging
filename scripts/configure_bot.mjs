@@ -45,6 +45,7 @@ if(!['start','mttsports','mttsportscheck','refstatus','yaako','wallet','linkstat
 }
 console.log('BOT_MENU_VERIFIED',JSON.stringify({
   bot_id:me.id,username:me.username,
+  has_main_web_app:me.has_main_web_app===true,
   menu_url:menu.web_app.url,
   commands:commands.map(x=>x.command),
   webhook_configured:Boolean(webhook.url)

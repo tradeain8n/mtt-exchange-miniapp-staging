@@ -1,0 +1,33 @@
+name: MTT SPORTS referral and post-login public checks
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: mttsports-readonly-check
+  cancel-in-progress: false
+jobs:
+  public-readonly:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Test changed public check code only
+        run: |
+          node --check scripts/mttsports_autocheck.mjs
+          node --test tests/mttsports_autocheck.test.mjs
+      - name: Read-only MTT SPORTS / Yaako / Telegram / MTT Network tests
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.GIFT_MUTANT_BOT_TOKEN }}
+        run: node scripts/mttsports_autocheck.mjs
+      - name: Publish detailed report without user credentials
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mttsports-readonly-report-${{ github.run_id }}
+          path: research-output/mttsports-postlogin-*
+          retention-days: 7
+          if-no-files-found: warn

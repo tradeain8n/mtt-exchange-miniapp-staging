@@ -1,0 +1,45 @@
+name: Yaako public REA and Telegram staging diagnostics
+on:
+  workflow_dispatch:
+    inputs:
+      browser_ui:
+        description: 'Inspect public Yaako login UI without credentials in Chromium'
+        required: false
+        type: boolean
+        default: false
+permissions:
+  contents: read
+concurrency:
+  group: yaako-public-research
+  cancel-in-progress: false
+jobs:
+  read-only-research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 13
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Test only new public research and wallet UI contracts
+        run: |
+          node --check scripts/yaako_public_analysis.mjs
+          node --test tests/yaako_research.test.mjs
+      - name: Inventory public website assets without credentials
+        run: node scripts/yaako_public_analysis.mjs
+      - name: Install Chromium probe tools (optional)
+        if: inputs.browser_ui
+        run: |
+          npm install --no-save --no-package-lock --ignore-scripts --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Compare public login UI in UA simulations
+        if: inputs.browser_ui
+        run: node scripts/yaako_login_visual_probe.mjs
+      - name: Save metadata report without screenshots or credentials
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: yaako-public-analysis-${{ github.run_id }}
+          path: research-output/*.json
+          retention-days: 7
+          if-no-files-found: warn

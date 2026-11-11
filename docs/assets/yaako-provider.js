@@ -1,6 +1,6 @@
 // STAGING ONLY: connect to a real injected Yaako EVM provider.
 // This file NEVER injects or impersonates a provider and NEVER requests keys or payments.
-export const OFFICIAL_YAAKO_LOGIN = 'https://yaako.io/loginMobile';
+export const OFFICIAL_YAAKO_LOGIN = 'https://account.yaako.io/oauth2/login';
 export const MTT_CHAIN_HEX = '0x1ae0'; // 6880
 
 const evm = value => typeof value === 'string' && /^0x[0-9a-fA-F]{40}$/.test(value);

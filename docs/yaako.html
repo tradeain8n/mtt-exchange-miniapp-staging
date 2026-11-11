@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#101b2d">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Baby MTT V2 · Yaako — тестовый вход</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    :root{color-scheme:dark;font:16px/1.5 system-ui,-apple-system,Arial,sans-serif;color:#f4f7ff;background:#0e192a}
+    *{box-sizing:border-box}body{margin:0}main{max-width:550px;margin:auto;padding:22px 18px 60px}
+    header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 32px}
+    .brand{font-weight:900;letter-spacing:.08em;font-size:18px}.brand span{display:block;letter-spacing:.16em;font-size:10px;color:#a5b9cf}
+    .chip{background:#244239;color:#99ffe0;border-radius:9px;padding:6px 10px;font-size:11px;font-weight:800}
+    h1{font-size:30px;line-height:1.13;letter-spacing:-.03em;margin:0 0 12px}h2{font-size:18px;margin:0 0 12px}
+    p{margin:6px 0 12px}.sub{color:#acbdd4;font-size:14px;line-height:1.65}
+    .panel{border:1px solid #344965;background:#18283e;border-radius:22px;padding:22px 18px;margin:20px 0}
+    .wallet-head{display:flex;align-items:center;gap:12px;margin:0 0 20px}.logo{border-radius:16px;width:52px;height:52px;background:#453fff;display:grid;place-items:center;font-weight:900;font-size:28px}
+    .wallet-head strong{font-size:21px}.wallet-head small{display:block;color:#9fb2c7;font-size:12px}
+    .btn{display:flex;justify-content:center;align-items:center;text-align:center;width:100%;text-decoration:none;border-radius:13px;padding:15px;min-height:52px;font:700 15px system-ui;cursor:pointer}
+    .primary{background:#39e8b0;color:#08231c;border:0}.secondary{background:#273d57;color:#f0f7ff;border:1px solid #42617e}.tertiary{background:transparent;color:#b9cee5;border:1px solid #344965}
+    .btn+.btn{margin-top:10px}.hint{background:#162d38;color:#b5e5dc;border:1px solid #2b665f;border-radius:12px;padding:12px 13px;font-size:13px;line-height:1.55}
+    .muted{color:#96a8bd;font-size:12px}.hidden{display:none}.row{display:flex;align-items:start;gap:12px;margin:12px 0}
+    .num{background:#2a3f58;color:#b8fadd;font-size:13px;font-weight:900;min-width:28px;height:28px;border-radius:50%;display:grid;place-items:center}
+    input{background:#112034;border:1px solid #52728e;color:#fff;font:15px monospace;border-radius:12px;padding:14px;width:100%}
+    .error{color:#ffacac;font-size:13px}.good{color:#7aebbf;font-size:13px}
+    footer{text-align:center;color:#8698ae;font-size:12px;margin-top:24px}
+    a.link{color:#a6f5db}
+  </style>
+</head>
+<body>
+<main>
+ <header><div class="brand">BABY MTT<span>EXCHANGE · V2</span></div><span class="chip">ТЕСТ · БЕЗ ПЛАТЕЖЕЙ</span></header>
+ <p class="sub">ШАГ 1 ИЗ 2 · ПЕРВОЕ ПОСЕЩЕНИЕ</p>
+ <h1>Куда вы хотите получать MTT?</h1>
+ <p class="sub">Предлагаем создать кошелёк Yaako. Его можно использовать отдельно от Baby MTT и покерного аккаунта.</p>
+ <section id="offer" class="panel">
+   <div class="wallet-head"><div class="logo">Y</div><div><strong>Yaako Wallet</strong><small>Внешний кошелёк · самостоятельная регистрация</small></div></div>
+   <div class="hint">Регистрация проводится в официальном приложении Yaako. Baby MTT не запрашивает пароль, seed-фразу или приватный ключ.</div>
+   <a class="btn primary" href="https://yaako.io/" target="_blank" rel="noopener noreferrer">Создать Yaako · официальный сайт</a>
+   <button type="button" id="existing" class="btn secondary">У меня уже есть Yaako</button>
+   <button type="button" id="skip" class="btn tertiary">Продолжить с Baby MTT без Yaako</button>
+ </section>
+ <section id="manual" class="panel hidden">
+   <h2>Указать кошелёк Yaako</h2>
+   <div class="row"><div class="num">1</div><p class="sub">В Yaako найдите «Получить» для сети MTT Network и скопируйте публичный адрес.</p></div>
+   <div class="row"><div class="num">2</div><p class="sub">Вставьте адрес для проверки его формата.</p></div>
+   <label class="sub" for="address">Публичный EVM-адрес</label>
+   <input id="address" type="text" placeholder="0x..." maxlength="42" autocomplete="off" autocapitalize="off" spellcheck="false">
+   <p id="result" aria-live="polite" class="muted">Никакие секреты сюда вводить нельзя.</p>
+   <button type="button" id="send" class="btn primary">Скопировать адрес и перейти в Telegram</button>
+   <p class="muted">Бот попросит вставить адрес в чат. Подтверждение владения кошельком — следующий этап; пока это только ввод адреса.</p>
+   <button type="button" id="back" class="btn tertiary">Назад к выбору</button>
+ </section>
+ <footer>MTT Network · Chain ID 6880<br>Тестовый сценарий. Кошельки, депозиты и обмены не запускаются.<br><a class="link" href="https://yaako.io/" target="_blank" rel="noopener noreferrer">Сайт Yaako</a></footer>
+</main>
+<script>
+ const tg=window.Telegram?.WebApp;
+ tg?.ready();tg?.expand();
+ const el=id=>document.getElementById(id);
+ const bot='https://t.me/GiftMutantBot?start=';
+ function openBot(option){
+   const url=bot+option;
+   if(tg?.openTelegramLink)tg.openTelegramLink(url);
+   else window.location.href=url;
+ }
+ el('existing').onclick=()=>{el('offer').classList.add('hidden');el('manual').classList.remove('hidden');};
+ el('back').onclick=()=>{el('manual').classList.add('hidden');el('offer').classList.remove('hidden');};
+ el('skip').onclick=()=>openBot('baby');
+ el('send').onclick=async()=>{
+   const val=el('address').value.trim();
+   if(!/^0x[0-9a-fA-F]{40}$/.test(val)){
+     el('result').textContent='Неверный формат. Требуется 0x и 40 шестнадцатеричных символов.';
+     el('result').className='error';return;
+   }
+   el('result').textContent='Формат адреса подходит; владение НЕ подтверждено. Скопируйте адрес и отправьте его боту.';
+   el('result').className='good';
+   try{await navigator.clipboard.writeText(val);}catch{
+     el('result').textContent+=' Если копирование не сработало, скопируйте вручную.';
+   }
+   openBot('yaako');
+ };
+</script>
+</body>
+</html>

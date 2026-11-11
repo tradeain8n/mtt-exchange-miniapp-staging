@@ -22,6 +22,7 @@ await api('setMyCommands',{commands:[
     {command:'start',description:'MTT SPORTS / Yaako · тестовый вход'},
   {command:'mttsports',description:'MTT SPORTS · регистрация по реферальной ссылке'},
   {command:'mttsportscheck',description:'Проверить после входа в MTT SPORTS'},
+  {command:'refstatus',description:'Статус моего реферального приглашения'},
   {command:'yaako',description:'Выбор кошелька и вход Yaako'},
   {command:'wallet',description:'Мой тестовый профиль'},
   {command:'linkstatus',description:'Статус подписи и привязки'},
@@ -39,7 +40,7 @@ const webhook=await api('getWebhookInfo',{});
 if(menu.type!=='web_app'||menu.web_app?.url!==appUrl){
   throw Error('Telegram menu configuration could not be verified');
 }
-if(!['start','mttsports','mttsportscheck','yaako','wallet','linkstatus','approve','recipient','help'].every(name=>commands.some(x=>x.command===name))){
+if(!['start','mttsports','mttsportscheck','refstatus','yaako','wallet','linkstatus','approve','recipient','help'].every(name=>commands.some(x=>x.command===name))){
   throw Error('Telegram commands were not saved');
 }
 console.log('BOT_MENU_VERIFIED',JSON.stringify({

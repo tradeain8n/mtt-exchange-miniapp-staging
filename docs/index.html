@@ -2,97 +2,19 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#0b111c">
-  <meta name="description" content="Baby MTT Exchange — обмен USDT в BNB Smart Chain на нативный MTT.">
-  <title>GiftMutant · STAGING</title>
-  <link rel="manifest" href="./manifest.webmanifest">
-  <link rel="icon" href="./icon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./assets/main.css">
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <script defer type="module" src="./assets/main.js"></script>
+  <meta name="description" content="Baby MTT Exchange V2 — тестовая регистрация Telegram, MTT SPORTS и Yaako.">
+  <title>Baby MTT V2 · регистрация</title>
+  <meta http-equiv="refresh" content="0;url=./yaako.html">
 </head>
-<body>
-  <main class="app">
-    <header class="head">
-      <div class="brand"><div class="brand-mark">M</div><div><strong>GIFT MUTANT</strong><span>STAGING · TEST ONLY</span></div></div>
-      <div id="service-badge" class="badge badge-wait"><i></i><span>Проверка сервиса</span></div>
-    </header>
-
-    <section class="intro">
-      <p class="eyebrow">СТЕНД РАЗРАБОТКИ · БЕЗ РЕАЛЬНЫХ ДЕПОЗИТОВ</p>
-      <h1>USDT <span>→</span> MTT</h1>
-      <p>Отправляете USDT в сети BNB Smart Chain. После подтверждения обменник покупает нативные MTT и выплачивает их на ваш исходный EVM-адрес.</p>
-    </section>
-
-    <nav class="tabs" aria-label="Разделы Mini App">
-      <button type="button" class="tab selected" data-tab="exchange" aria-selected="true">Обмен</button>
-      <button type="button" class="tab" data-tab="status" aria-selected="false">Мой перевод</button>
-      <button type="button" class="tab" data-tab="info" aria-selected="false">Как работает</button>
-    </nav>
-
-    <section id="pane-exchange" class="pane">
-      <div class="swap-card">
-        <div class="section-top"><span>ВЫ ОТПРАВЛЯЕТЕ</span><span class="net">BSC · BEP-20</span></div>
-        <div class="amount-line"><input id="amount" value="1.00" inputmode="decimal" autocomplete="off" aria-label="Сумма USDT в сети BSC"><div class="asset"><span class="coin coin-usdt">₮</span>USDT</div></div>
-        <div class="middle-arrow"><span>↓</span></div>
-        <div class="section-top"><span>ОЖИДАЕМАЯ ВЫПЛАТА</span><span class="net">MTT Network</span></div>
-        <div class="amount-line payout-line"><output id="result">—</output><div class="asset"><span class="coin coin-mtt">M</span>MTT</div></div>
-        <div class="summary">
-          <div><span>Курс за 1 USDT</span><strong id="rate">—</strong></div>
-          <div><span>Котировка</span><strong id="quote-state">Обновляем...</strong></div>
-        </div>
-        <p id="quote-warning" class="small-warning">Расчёт предварительный. Итоговая сумма определяется по фактической покупке в пуле.</p>
-
-        <div id="service-closed" class="notice" role="status">
-          <strong>Тестовый режим — реальные переводы запрещены</strong>
-          <p>Котировку можно проверить, но отправлять средства пока нельзя. Открытие приёма подтверждается финансовым процессором.</p>
-        </div>
-
-        <div id="payment-panel" class="hidden">
-          <div class="divider"></div>
-          <p class="field-name">Адрес для USDT BEP-20</p>
-          <div class="address"><code id="deposit-address"></code><button type="button" id="copy-address" aria-label="Скопировать адрес">Копировать</button></div>
-          <p class="hint">Переводите только напрямую со своего EVM-адреса. С бирж, контрактов и через relayer поступления могут потребовать ручной проверки.</p>
-          <label class="consent"><input type="checkbox" id="agree"><span>Я контролирую исходный адрес в MTT Network, проверил сеть и принимаю плавающий курс, возможную задержку моста и порядок ручного разрешения сбоев.</span></label>
-          <button id="send" type="button" class="primary" disabled>Отправить USDT через кошелёк</button>
-          <p id="wallet-hint" class="hint">Если в Telegram нет подключённого кошелька, скопируйте адрес и отправьте USDT через приложение своего кошелька.</p>
-        </div>
-      </div>
-    </section>
-
-    <section id="pane-status" class="pane hidden">
-      <div class="track-card">
-        <p class="eyebrow">БЛОКЧЕЙН · ПРОВЕРКА</p>
-        <h2>Отследить обмен</h2>
-        <p class="muted">Вставьте хеш отправки USDT в сети BSC. Отобразятся реальные подтверждения и статус выплаты, если операция зарегистрирована процессором.</p>
-        <label class="field-name" for="tx-hash">BSC Transaction Hash</label>
-        <input class="hash-input" id="tx-hash" placeholder="0x..." autocomplete="off" spellcheck="false">
-        <button type="button" id="check-tx" class="secondary">Проверить перевод</button>
-        <div id="tx-progress" class="status-msg" role="status">Укажите хеш транзакции</div>
-        <div class="steps">
-          <div class="step" data-stage="0"><span>1</span><div><strong>USDT в сети BSC</strong><small>Проверка отправителя, суммы и подтверждений</small></div></div>
-          <div class="step" data-stage="1"><span>2</span><div><strong>Bridge / резерв USDT</strong><small>Поступление актива в MTT Network</small></div></div>
-          <div class="step" data-stage="2"><span>3</span><div><strong>Покупка через Router</strong><small>Обмен USDT на нативный MTT</small></div></div>
-          <div class="step" data-stage="3"><span>4</span><div><strong>Выплата MTT клиенту</strong><small>Подтверждённая транзакция получателю</small></div></div>
-        </div>
-        <div id="tx-links" class="tx-links"></div>
-      </div>
-    </section>
-
-    <section id="pane-info" class="pane hidden">
-      <div class="info-card">
-        <h2>Как работает обмен</h2>
-        <div class="info-item"><span>01</span><p><strong>Один перевод USDT</strong><br>Блокчейн BSC подтверждает отправку USDT с вашего кошелька на адрес обменника.</p></div>
-        <div class="info-item"><span>02</span><p><strong>Резерв или мост</strong><br>Система использует имеющийся USDT в MTT Network или переводит нужную сумму через Bridge.</p></div>
-        <div class="info-item"><span>03</span><p><strong>Прямой пул</strong><br>Router покупает нативные MTT, после чего вычисляется сумма клиенту по условиям курса.</p></div>
-        <div class="info-item"><span>04</span><p><strong>Выплата</strong><br>MTT поступают на тот же EVM-адрес в MTT Network; хеш можно проверить в эксплорере.</p></div>
-        <p class="muted">Токены из других сетей, отправка с биржи или ошибочная сумма не гарантируют автоматическую обработку. При затруднениях обратитесь в чат бота с хешем транзакции, но не отправляйте приватные ключи.</p>
-      </div>
-    </section>
-
-    <footer><span>GiftMutant Development</span><span id="footer-status">Операционный статус: проверяется</span></footer>
-  </main>
-  <div id="toast" role="status" class="toast hidden"></div>
+<body style="background:#0b111c;color:white;font:16px system-ui;padding:2rem">
+  <p>Открываем Baby MTT Exchange V2...</p>
+  <p><a href="./yaako.html" style="color:#86e5c4">Перейти в Mini App</a></p>
+  <script>
+    // Preserve Telegram launch parameters when starting our Main Mini App.
+    // Do not send them to any third-party origin.
+    window.location.replace('./yaako.html' + window.location.search + window.location.hash);
+  </script>
 </body>
 </html>

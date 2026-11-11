@@ -107,7 +107,7 @@ async function main(){
   'Attribution query i=ba434b5a; actual referral credit is unverified');
  await publicGet(referral,'MTT SPORTS referral landing page','mtt.xyz');
  await publicGet('https://sports.mtt.xyz/','MTT SPORTS game web app','sports.mtt.xyz');
- await publicGet('https://t.me/MTTSPORTS_bot','MTT SPORTS Telegram bot public page','t.me');
+ await publicGet('https://t.me/MTTSPORTS_bot','Сторонний промо-бот @MTTSPORTS_bot: публичная страница','t.me');
  await publicGet('https://account.yaako.io/oauth2/login','Yaako public login','account.yaako.io');
  await readChain();
  await supabaseAuthBoundary();

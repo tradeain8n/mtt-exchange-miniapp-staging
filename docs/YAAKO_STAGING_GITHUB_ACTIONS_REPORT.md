@@ -73,3 +73,43 @@ Do not publish email codes, OTP screenshots, private keys, recovery phrases,
 OAuth tokens or authenticated network traces. Never upload screenshots from
 a logged-in personal Yaako account to GitHub Actions artifacts. Screenshots,
 HTTP requests and source maps can contain sensitive session material.
+
+
+## Verified GitHub Actions acceptance — 2026-11-11
+
+- [PASS] Backend identity/proof CI (including a manual invalid-token Supabase
+  denial probe): https://github.com/tradeain8n/mtt-exchange-engine-staging/actions/runs/43030678309
+- [PASS] Test bot menu action: https://github.com/tradeain8n/mtt-exchange-miniapp-staging/actions/runs/43030683913
+  - Official getMe verified @GiftMutantBot, not @babymttbot.
+  - Menu: /mtt-exchange-miniapp-staging/yaako.html.
+  - Commands: start, yaako, wallet, linkstatus, approve, recipient, help.
+  - Telegram webhook absent; existing TV Box polling remains the bot mechanism.
+- [PASS] Public read-only Yaako REA:
+  https://github.com/tradeain8n/mtt-exchange-miniapp-staging/actions/runs/43031274698
+  - Two public HTML entrypoints and three public JS assets inspected; no errors.
+  - yaako.io main bundle: 7,334,970 bytes; sha256
+    6e402e0b9c683a016d4da9a911d680323c1d4a2dc35c5ff76619e478e1e3f49f.
+  - Public wallet SDK bundle: 271,363 bytes; sha256 prefix f28dbe41b3a6.
+  - Static string evidence: EVM, Solana, WalletConnect, EIP-6963, personal_sign,
+    OAuth, bridge, custodial models, MTT Network. String presence alone does NOT
+    mean external Baby MTT integration is authorized or supported.
+  - Chromium public login UI (no credentials): default browser UA exposed
+    Google and Apple labels, while simulated iOS UA showed Google without Apple.
+    UA simulation is NOT an actual iPhone WebView. Actual user screenshot is the
+    only device-side evidence of successful official email OTP login.
+- [PASS] Existing Mini App CI:
+  https://github.com/tradeain8n/mtt-exchange-miniapp-staging/actions/runs/43030610834
+
+The initial optional browser study failed because Playwright 1.56.1 did not
+support GitHub's ubuntu-latest 26.04. Fixed by pinning only that research
+workflow to Ubuntu 24.04, and the subsequent run passed. No production engine,
+private OAuth session, Yaako funds, or MTT SPORTS accounts were accessed.
+
+## Outcome
+
+GitHub Actions is now connected to the existing staging bot for its settings
+and test coverage. The user's successful authentication to Yaako is a separate,
+official account session: it does NOT furnish Baby MTT with an OAuth grant or
+a confirmed EVM address. Complete address comparison and an actual supported
+wallet signature (or official partner token flow) on a real device before any
+recipient auto-selection is enabled in live exchange operations.

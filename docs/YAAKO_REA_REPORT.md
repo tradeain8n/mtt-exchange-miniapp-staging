@@ -49,9 +49,11 @@ to inject a fake window.ethereum provider into our page.
 
 ## Implemented in STAGING
 
-- Official Yaako registration page opened in a clearly labeled modal iframe
-  at https://yaako.io/loginMobile, only after an explicit user click.
-- A prominent fallback opens the same official page directly in a browser.
+- The prior iframe was removed after a real iPhone/Telegram test showed a black page.
+- The first-run button now links directly to the confirmed official
+  https://account.yaako.io/oauth2/login login page, without proxying or framing it.
+- No browser OAuth token or Yaako session is returned to Baby MTT; connecting
+  an address remains an independent follow-up action.
 - A separately triggered EIP-6963 lookup recognizes Yaako by
   rdns=com.yaako.wallet, with isYaakoWallet fallback.
 - When supported, eth_requestAccounts is requested with explicit user action,
@@ -69,9 +71,9 @@ to inject a fake window.ethereum provider into our page.
     node --check docs/assets/yaako-provider.js
 
 In a Telegram device, open the existing test bot https://t.me/GiftMutantBot
-and choose the staging registration Mini App. Check that the official Yaako
-screen opens. If Google/Apple does not work inside iframe, use the external
-Yaako button instead. Return and try wallet detection; an unavailable
+and choose the staging registration Mini App. Open the official Yaako login in Safari using the direct link.
+Confirm that the previous blank iframe is gone from the staging Mini App.
+The Baby MTT session and the Yaako login remain separate. Return and try wallet detection; an unavailable
 injected provider is an expected, safe result inside Telegram's WebView.
 
 ## Next product features

@@ -37,7 +37,7 @@ test('staging connector obtains address without pretending ownership proof', asy
   assert.equal(result.address,address);
   assert.equal(result.verified,false);
   assert.deepEqual(requests,['eth_requestAccounts','eth_chainId']);
-  assert.equal(OFFICIAL_YAAKO_LOGIN,'https://yaako.io/loginMobile');
+  assert.equal(OFFICIAL_YAAKO_LOGIN,'https://account.yaako.io/oauth2/login');
 });
 
 test('unavailable Yaako, wrong chain and refused connection are distinguished', async () => {

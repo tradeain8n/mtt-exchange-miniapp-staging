@@ -14,7 +14,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   read-only-research:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 13
     steps:
       - uses: actions/checkout@v4

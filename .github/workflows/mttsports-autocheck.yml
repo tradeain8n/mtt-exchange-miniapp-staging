@@ -19,7 +19,7 @@ jobs:
         run: |
           node --check scripts/mttsports_autocheck.mjs
           node --test tests/mttsports_autocheck.test.mjs
-      - name: Read-only MTT SPORTS / Yaako / Telegram / MTT Network tests
+      - name: Real official MTT SPORTS referral handoff + read-only service checks
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.GIFT_MUTANT_BOT_TOKEN }}
         run: node scripts/mttsports_autocheck.mjs

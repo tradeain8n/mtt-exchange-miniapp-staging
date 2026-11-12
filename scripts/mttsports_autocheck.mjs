@@ -9,14 +9,33 @@ const results=[];
 function record(label,ok,details,critical=true){
  results.push({label,ok,details:String(details).slice(0,250),critical});
 }
+export function verifyOfficialReferralLanding({status,finalUrl,contentType,htmlLength}){
+ try{
+  const url=new URL(finalUrl);
+  return status>=200&&status<400
+    &&url.protocol==='https:'&&url.hostname==='mtt.xyz'
+    &&url.searchParams.get('i')==='ba434b5a'
+    &&String(contentType).toLowerCase().startsWith('text/html')
+    &&htmlLength>100;
+ }catch{return false}
+}
 async function publicGet(url,label,expectedHost){
  try{
   const r=await fetch(url,{method:'GET',signal:AbortSignal.timeout(16000),
    credentials:'omit',cache:'no-store',headers:{Accept:'text/html'}});
   const finalHost=new URL(r.url).hostname;
   const html=(await r.text()).slice(0,170000);
-  record(label,r.ok&&finalHost===expectedHost&&html.length>100,
-   'HTTP '+r.status+'; final host='+finalHost+'; HTML size='+html.length);
+  const liveReferral=(url===referral);
+  const passed=liveReferral
+   ?verifyOfficialReferralLanding({status:r.status,finalUrl:r.url,
+       contentType:r.headers.get('content-type'),htmlLength:html.length})
+   :r.ok&&finalHost===expectedHost&&html.length>100;
+  record(label,passed,
+   'HTTP '+r.status+'; final host='+finalHost+'; HTML size='+html.length+
+   (liveReferral?'; referrer preserved='+new URL(r.url).searchParams.get('i'):''));
+  if(liveReferral)record('LIVE MTT SPORTS referral handoff (not signup)',passed,
+   passed?'Official public referral route reachable; provider registration NOT VERIFIED'
+   :'Official referral query/destination/HTML check failed');
  }catch(e){record(label,false,e.message);}
 }
 async function readChain(){
@@ -83,6 +102,12 @@ export function buildReport(){
  '|---|---|---|',
  rows,
  '',
+ '## Реальная регистрация MTT SPORTS',
+ '- Реферальная ссылка проверяется настоящим HTTP-запросом к публичному сайту MTT SPORTS.',
+ '- Создание игрового аккаунта: **NOT VERIFIED** (нет разрешённого партнёрского callback/API).',
+ '- Начисление реферала ba434b5a: **NOT VERIFIED** (требуется доказательство от платформы).',
+ '- Интеграция: https://github.com/tradeain8n/mtt-exchange-engine-staging/issues/17',
+ '',
  '## Целевой обмен — пока НЕ РАЗРЕШЁН',
  '- Отдаём: **'+source+'**',
  '- Получаем: **'+destination+'**',
@@ -116,6 +141,13 @@ async function main(){
  writeFileSync('research-output/mttsports-postlogin-report.md',buildReport());
  writeFileSync('research-output/mttsports-postlogin-status.json',JSON.stringify({
   generatedAt:new Date().toISOString(),results,
+  providerRegistration:{
+   officialReferralUrl:referral,
+   liveReferralHandoff:results.find(x=>x.label==='LIVE MTT SPORTS referral handoff (not signup)')?.ok===true,
+   accountCreated:'NOT_VERIFIED',
+   referralCredited:'NOT_VERIFIED',
+   officialPartnerSso:'NOT_DOCUMENTED_OR_APPROVED'
+  },
   goal:{source,destination,quoteVerified:false,executionEnabled:false}
  },null,2));
  if(process.env.GITHUB_STEP_SUMMARY)appendFileSync(process.env.GITHUB_STEP_SUMMARY,buildReport());

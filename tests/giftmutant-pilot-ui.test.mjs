@@ -7,11 +7,11 @@ const ton='UQALB1cbdr5SgjCRdUMHjvTARzv0_V3Mju4V6cO1YbyYg2EV';
 test('pilot UI uses TON wallet confirmation only, no private seed or keys',()=>{
  const page=readFileSync(new URL('../docs/exchange.html',import.meta.url),'utf8');
  const js=readFileSync(new URL('../docs/assets/exchange.js',import.meta.url),'utf8');
- assert.match(page,/id="ton-pilot-create"/);
- assert.match(page,/id="ton-pilot-refresh"/);
+ assert.match(page,/id="swap-main"/);
+ assert.match(page,/id="swap-check-status"/);
  assert.match(js,/assertPilotOrder/);
- assert.match(js,/window\.location\.href=order\.paymentUrl/);
- assert.match(js,/Проверить статус обмена|updatePilotStatus/);
+ assert.match(js,/https:\/\/app\.tonkeeper\.com\/transfer/);
+ assert.match(js,/loadPilotStatus|swap-order-status/);
  assert.doesNotMatch(js,/centralPrivateKey|privateKey|seedPhrase/);
 });
 test('checkout payload keeps exact 3 USDt and authenticated bound EVM',async()=>{

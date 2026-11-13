@@ -1,49 +1,47 @@
 import {pilotRequest,assertPilotOrder} from './giftmutant-pilot.js';
 import {loadChainPortfolio,NETWORKS_WALLET,explorerHistoryUrl} from './wallet-portfolio.js';
 import {parseUsdt,formatWei,fetchLiveReserves,calculateQuote} from './quote.js';
-import {NETWORKS,DEFAULT_AMOUNT,evaluateRoute,readWalletFragment} from './exchange-model.js';
-import {normalizeAppApi,isEvmAddress,fetchTonPreview,createTonDraft}
- from './ton-flow-client.js';
+import {readWalletFragment} from './exchange-model.js';
 
 const tg=window.Telegram?.WebApp;
 try{
-  tg?.ready(); tg?.expand();
-  tg?.setHeaderColor?.('#101f4d');tg?.setBackgroundColor?.('#071023');
+ tg?.ready();tg?.expand();tg?.setHeaderColor?.('#111b35');
+ tg?.setBackgroundColor?.('#0a1224');
 }catch{}
 const el=id=>document.getElementById(id);
 const context=readWalletFragment(window.location.hash);
-const wallet=context.wallet;
-const fmt=x=>x.length>26?x.slice(0,10)+'…'+x.slice(-8):x;
-let pending=false;
+const wallet={...context.wallet};
+const fmt=value=>value&&value.length>26?value.slice(0,9)+'…'+value.slice(-7):(value||'—');
 let gateway=null;
-let toastTimer=null;
 let currentWalletNetwork='mtt';
-let refreshSequence=0;
+let refreshSequence=0,toastTimer=null;
+let quoteReady=false,quoteLoading=false,placingOrder=false,currentOrder=null;
+let latestEstimate=null,lastQuoteAt=0;
+const nameForState={
+ awaiting_ton:'Ожидаем оплату',ton_confirmed:'Оплата получена',
+ approval_pending:'Подготавливаем обмен',approved:'Обмениваем USDT',
+ swap_pending:'Покупаем MTT',swap_confirmed:'MTT куплены',
+ payout_pending:'Отправляем MTT',completed:'Готово! MTT отправлены',
+ manual_review:'Обмен требует проверки'
+};
 function toast(message){
-  const box=el('toast');
-  box.textContent=message;box.classList.remove('hidden');
-  clearTimeout(toastTimer);
-  toastTimer=setTimeout(()=>box.classList.add('hidden'),3500);
+ const box=el('toast');box.textContent=message;box.classList.remove('hidden');
+ clearTimeout(toastTimer);toastTimer=setTimeout(()=>box.classList.add('hidden'),3500);
 }
 function tab(value){
-  const current=value==='wallet'?'wallet':'swap';
-  for(const item of ['wallet','swap']){
-    const selected=current===item;
-    el('tab-'+item).classList.toggle('selected',selected);
-    el('tab-'+item).setAttribute('aria-selected',String(selected));
-    el('view-'+item).classList.toggle('hidden',!selected);
-  }
-  if(current==='wallet'){
-   void refreshPortfolio();
-   void refreshBackupStatus();
-  }
+ const current=value==='wallet'?'wallet':'swap';
+ for(const key of ['wallet','swap']){
+  const selected=current===key;
+  el('tab-'+key).classList.toggle('selected',selected);
+  el('tab-'+key).setAttribute('aria-selected',String(selected));
+  el('view-'+key).classList.toggle('hidden',!selected);
+ }
+ if(current==='wallet'){void refreshPortfolio();void refreshBackupStatus();}
 }
-document.querySelectorAll('.tab').forEach(b=>
-  b.addEventListener('click',()=>tab(b.dataset.tab)));
+document.querySelectorAll('.tab').forEach(button=>
+ button.addEventListener('click',()=>tab(button.dataset.tab)));
 tab(context.tab);
-for(const {id,label} of NETWORKS){
-  if(!document.querySelector('#network option[value="'+id+'"]'))throw Error('network_missing_'+label);
-}
+
 function walletScreen(){
   el('wallet-evm').textContent=wallet.evm||'Адрес не создан';
   el('wallet-ton').textContent=wallet.ton||'Адрес не создан';
@@ -134,10 +132,10 @@ el('wallet-history').addEventListener('click',()=>{
  else window.open(url,'_blank','noopener,noreferrer');
 });
 el('wallet-swap').addEventListener('click',()=>{
- el('network').value=currentWalletNetwork==='bsc'?'bsc':'ton';
+ el('network').value='ton';
  if(wallet.evm)el('evm-recipient').value=wallet.evm;
- tab('swap');refreshRoute();
- if(currentWalletNetwork==='mtt')toast('Получение MTT Network выбрано. Для оплаты используется USD₮ TON.');
+ tab('swap');void refreshQuote();
+
 });
 
 el('evm-recipient').value=wallet.evm||'';
@@ -162,169 +160,218 @@ async function refreshBackupStatus(){
   }
  }catch{/* No false-positive backup confirmation on error. */}
 }
-async function loadTonGateway(){
-  try{
-    const response=await fetch('./config.json',{cache:'no-store'});
-    if(response.ok)gateway=normalizeAppApi(await response.json());
-  }catch{}
-  refreshRoute();
-  void refreshBackupStatus();
-  void updatePilotStatus();
-}
-void loadTonGateway();
 
-function openBot(){
-  const url='https://t.me/GiftMutantBot?start=wallet';
-  if(tg?.openTelegramLink)tg.openTelegramLink(url);
-  else window.open(url,'_blank','noopener,noreferrer');
+
+function setFeedback(message,warning=false){
+ const node=el('swap-message');node.textContent=message;
+ node.classList.toggle('error',warning);
 }
-el('open-wallet-bot').addEventListener('click',openBot);
-el('network').addEventListener('change',()=>{el('result').textContent='—';refreshRoute();});
-el('destination-network').addEventListener('change',()=>{el('result').textContent='—';refreshRoute();});
-el('input-asset').addEventListener('change',()=>{
-  el('source-token-title').textContent=el('input-asset').value;
+function updateRecipient(){
+ el('evm-recipient').value=wallet.evm||'';
+ el('swap-evm-target').textContent=fmt(wallet.evm);
+}
+async function getAuthenticatedWallet(){
+ if(!gateway||!tg?.initData)throw Error('Откройте GiftMutant через кнопку Telegram-бота.');
+ const res=await fetch(gateway+'/api/wallet/ton/compat/status',{
+  method:'POST',headers:{'content-type':'application/json'},cache:'no-store',
+  credentials:'omit',referrerPolicy:'no-referrer',
+  body:JSON.stringify({initData:tg.initData}),
+  signal:AbortSignal.timeout(12000)
+ });
+ const data=await res.json();
+ if(!res.ok||!data.wallet?.evm||!data.wallet?.ton)
+  throw Error(res.status===401?'Сессия устарела. Откройте Mini App через бот заново.':
+    'Личный кошелёк не найден. Откройте «Мой кошелёк» в боте.');
+ wallet.evm=data.wallet.evm;wallet.ton=data.wallet.ton;
+ walletScreen();updateRecipient();
+ return data.wallet;
+}
+function showStage(stage){
+ for(const item of ['swap-input-stage','swap-checkout','swap-order-stage']){
+  el(item).classList.toggle('hidden',item!==stage);
+ }
+}
+function setAction(){
+ const button=el('swap-main');
+ if(placingOrder){button.disabled=true;button.textContent='Создаём заявку…';return;}
+ button.disabled=quoteLoading||!gateway||!tg?.initData||!wallet.evm||!wallet.ton;
+ button.textContent=quoteReady?'Продолжить':'Обновить курс';
+}
+async function refreshQuote(){
+ if(quoteLoading||currentOrder)return;
+ quoteLoading=true;setAction();
+ el('quote-note').textContent='Курс обновляется';
+ try{
+  const reserves=await fetchLiveReserves();
+  const estimate=calculateQuote(parseUsdt('3.00'),reserves);
+  latestEstimate=estimate;lastQuoteAt=Date.now();quoteReady=true;
+  el('result').textContent='≈ '+formatWei(estimate.amountOut,0);
+  el('quote-note').textContent='Курс предварительный';
+  setFeedback(wallet.evm&&wallet.ton
+   ?'MTT поступят на ваш привязанный кошелёк'
+   :'Подключаем личный кошелёк…');
+ }catch{
+  quoteReady=false;latestEstimate=null;
   el('result').textContent='—';
-  refreshRoute();
-});
-el('evm-recipient').addEventListener('input',refreshRoute);
-el('amount').addEventListener('input',()=>{el('result').textContent='—';refreshRoute();});
-function refreshRoute(){
-  const network=el('network').value;
-  const token=el('input-asset').value;
-  const recipient=el('evm-recipient').value.trim();
-  const route=evaluateRoute({network,token,amount:el('amount').value});
-  const destination=el('destination-network').value;
-  const status=el('route-state');
-  el('recipient').textContent=isEvmAddress(recipient)?fmt(recipient):'Укажите корректный EVM-адрес';
-  el('ton-preflight').classList.toggle('hidden',network!=='ton');
-  if(destination!=='mtt'){
-    status.querySelector('strong').textContent='Недоступная сеть получения';
-    status.querySelector('span').textContent='MTT можно получить только в MTT Network (6880).';
-  }else if(!route.ok){
-    status.querySelector('strong').textContent='Маршрут недоступен';
-    status.querySelector('span').textContent=route.reason+' Депозит запрещён.';
-  }else if(network==='ton'){
-    status.querySelector('strong').textContent='USD₮ TON → MTT Network';
-    status.querySelector('span').textContent=route.reason;
-  }else{
-    status.querySelector('strong').textContent='Пилот: USDT BSC → MTT Network';
-    status.querySelector('span').textContent=route.reason+
-      ' Сначала требуется безопасная выдача seed-фразы и подтверждение затрат на газ.';
-  }
-  el('quote').disabled=!route.ok||pending;
-  el('quote').textContent=route.ok
-    ?(network==='ton'?'Рассчитать MTT за 3 USD₮':'Рассчитать ориентир для '+route.amount+' USDT')
-    :'Выберите поддерживаемый маршрут';
-  el('ton-draft').disabled=true;
-  el('ton-pilot-create').disabled=!(destination==='mtt'&&network==='ton'&&route.ok&&
-    Number(route.amount)===3&&gateway&&tg?.initData&&wallet?.ton&&wallet?.evm&&
-    recipient.toLowerCase()===wallet.evm.toLowerCase()&&!pending);
-  el('pay').disabled=true;
-  return route;
+  el('quote-note').textContent='Нет котировки';
+  setFeedback('Не удалось получить курс. Нажмите «Обновить курс».',true);
+ }finally{quoteLoading=false;setAction();}
 }
-refreshRoute();
 const pilotError=error=>{
- const reasons={
-  treasury_signer_not_armed:'Центральный подписант ещё не разблокирован на ТВ-боксе. Деньги пока не переводите.',
-  treasury_autosigner_not_ready:'Сервис выплат ещё не готов. Деньги пока не переводите.',
-  treasury_inventory_insufficient:'Недостаточно ликвидности на центральном кошельке.',
-  wallet_backup_not_confirmed:'Сначала подтвердите сохранение 12 слов кошелька.',
-  unsupported_amount_or_recipient:'Для пилота допускаются только 3 USD₮ и ваш привязанный EVM.',
-  telegram_session_expired:'Откройте мини-приложение заново через GiftMutantBot.'
+ const map={
+ treasury_signer_not_armed:'Сервис выплат пока не готов. Оплату не отправляйте.',
+ settlement_worker_offline:'Обмен временно недоступен. Оплату не отправляйте.',
+ treasury_inventory_insufficient:'Недостаточно ликвидности. Попробуйте позже.',
+ wallet_backup_not_confirmed:'Сначала подтвердите сохранение кошелька.',
+ unsupported_amount_or_recipient:'Недоступный получатель. Откройте приложение из бота.',
+ telegram_session_expired:'Сессия Telegram истекла. Откройте приложение заново.',
+ pilot_daily_usdt_limit_exceeded:'Лимит обменов на сегодня исчерпан.',
+ secure_pilot_connection_required:'Не удалось проверить Telegram-подключение.'
  };
- return reasons[error.message]||'Заявка недоступна: '+error.message;
+ return map[error.message]||'Не удалось выполнить действие. '+String(error.message||'').slice(0,90);
 };
-async function updatePilotStatus(){
- if(!gateway||!tg?.initData||!wallet?.evm||!wallet?.ton)return;
+function validatedOrder(value){
+ return assertPilotOrder(value,wallet.evm,wallet.ton);
+}
+function linkForWallet(order){
+ if(!order?.paymentUrl)return null;
+ // TON's documented jetton deep link also supports the HTTPS Tonkeeper format.
+ const link=order.paymentUrl.replace(/^ton:\/\/transfer\//,'https://app.tonkeeper.com/transfer/');
+ const target=new URL(link);
+ if(target.protocol!=='https:'||target.hostname!=='app.tonkeeper.com'||
+    !target.pathname.startsWith('/transfer/')||
+    target.searchParams.get('amount')!=='3000000'||
+    !target.searchParams.get('jetton')||
+    target.searchParams.get('text')!==order.memo)
+  throw Error('Неверные реквизиты оплаты');
+ return target.href;
+}
+function renderOrder(order){
+ const data=validatedOrder(order);
+ currentOrder=data;
+ const payStage=data.state==='awaiting_ton'&&Boolean(data.paymentUrl)&&
+   Math.floor(Date.now()/1000)<data.expiresAt;
+ el('swap-ton-recipient').textContent=data.centralTon;
+ el('swap-payment-memo').textContent=data.memo;
+ el('swap-evm-target').textContent=fmt(data.recipientEvm);
+ if(payStage){
+  showStage('swap-checkout');
+ }else{
+  showStage('swap-order-stage');
+  el('swap-order-heading').textContent=nameForState[data.state]||'Проверяем обмен';
+  el('swap-order-status').textContent=data.state==='completed'
+   ?'MTT перечислены на ваш личный EVM-адрес.'
+   :data.state==='awaiting_ton'
+    ?'Время заявки истекло. Не переводите деньги по старым реквизитам.'
+    :data.state==='manual_review'
+     ?'Требуется проверка. Повторно USD₮ не отправляйте.'
+     :'Проверяем транзакции в блокчейне.';
+  el('swap-again').classList.toggle('hidden',data.state!=='completed');
+  el('swap-order-id').textContent='Заявка № '+data.id.slice(0,8);
+  el('swap-order-output').textContent=data.payoutMttWei
+   ?'Получено '+formatWei(BigInt(data.payoutMttWei),2)+' MTT':'';
+  el('swap-show-payment').classList.toggle('hidden',
+    !(data.state==='awaiting_ton'&&payStage));
+ }
+ return data;
+}
+async function loadPilotStatus(){
+ if(!gateway||!tg?.initData||!wallet.evm||!wallet.ton)return;
  try{
   const response=await pilotRequest({base:gateway,initData:tg.initData,action:'status'});
-  if(!response.order){
-   el('ton-order-status').textContent='Новая заявка ещё не создана. Для оплаты потребуется подтверждение в TON-кошельке.';
-   return;
+  if(response.order){
+   renderOrder(response.order);return response.order;
   }
-  const order=assertPilotOrder(response.order,wallet.evm,wallet.ton);
-  const labels={awaiting_ton:'Ожидаем 3 USD₮ в TON',
-   ton_confirmed:'USD₮ TON получены. Подготавливаем покупку MTT',
-   approval_pending:'Подтверждаем разрешение на обмен в MTT Network',
-   approved:'Покупка MTT подготовлена',
-   swap_pending:'MTT Swap выполняет покупку',
-   swap_confirmed:'MTT куплены. Готовится выплата',
-   payout_pending:'Переводим MTT на ваш EVM',
-   completed:'MTT доставлены на ваш EVM',
-   manual_review:'Нужна проверка оператора'};
-  el('ton-order-status').textContent='Заявка '+order.id.slice(0,8)+': '+
-   (labels[order.state]||order.state)+
-   (order.payoutHash?' · MTT TX '+order.payoutHash.slice(0,12)+'…':'');
- }catch(error){el('ton-order-status').textContent=pilotError(error);}
+ }catch(error){
+  if(currentOrder)el('swap-order-status').textContent=pilotError(error);
+ }
+ return null;
 }
-el('ton-pilot-refresh').addEventListener('click',()=>void updatePilotStatus());
-el('ton-pilot-create').addEventListener('click',async()=>{
- const route=refreshRoute();
- if(pending||route.network!=='ton'||Number(route.amount)!==3||
-    el('destination-network').value!=='mtt'||!wallet?.ton)return;
- pending=true;el('ton-pilot-create').disabled=true;
+async function createOrder(){
+ if(placingOrder||!quoteReady||!gateway)return;
+ placingOrder=true;setAction();
  try{
-  const response=await pilotRequest({base:gateway,initData:tg.initData,
+  await getAuthenticatedWallet(); // never trust a fragment-only address
+  if(Date.now()-lastQuoteAt>60000)await refreshQuote();
+  const res=await pilotRequest({base:gateway,initData:tg.initData,
    action:'create',recipientEvm:wallet.evm});
-  const order=assertPilotOrder(response.order,wallet.evm,wallet.ton);
-  el('ton-order-status').textContent=
-   'Заявка '+order.id.slice(0,8)+' оформлена. Отправьте ровно 3 USD₮ TON на указанный адрес с прикреплённым комментарием. Подтвердите платёж в TON-кошельке.';
-  el('result').textContent=response.indicativeClientMtt
-   ?Number(response.indicativeClientMtt).toLocaleString('ru-RU',{maximumFractionDigits:2})
-   :'—';
-  el('quote-details').textContent='Ориентир по реальной котировке, комиссия 10%. Минимальный выход: '+
-   (response.minClientMtt||'—')+' MTT. Подписание TON-транзакции только в вашем кошельке.';
-  if(order.paymentUrl)window.location.href=order.paymentUrl;
-  else el('ton-order-status').textContent='Новая оплата недоступна: заявка уже обрабатывается.';
- }catch(error){el('ton-order-status').textContent=pilotError(error);}
- finally{pending=false;refreshRoute();}
-});
-el('ton-draft').addEventListener('click',async()=>{
-  const route=refreshRoute();
-  if(!route.ok||route.network!=='ton'||!gateway||!tg?.initData)return;
-  const r=await createTonDraft({baseUrl:gateway,amount:route.amount,
-    recipient:el('evm-recipient').value.trim(),initData:tg.initData});
-  el('ton-order-status').textContent=r.ok
-    ?'Тестовая заявка '+r.draft.id+' сохранена. Статус: '+r.draft.status+'. Платёжный адрес НЕ выдаётся.'
-    :'Заявка не сохранена: необходим рабочий авторизованный шлюз. Деньги НЕ отправлять.';
-});
-async function quote(){
-  const route=refreshRoute();
-  if(!route.ok||pending)return;
-  pending=true;
-  el('quote').disabled=true;
-  el('quote').textContent='Читаем резерв пула…';
-  const started=el('amount').value;
-  const network=el('network').value;
-  try{
-    if(route.network==='ton'){
-      const reserves=await fetchLiveReserves();
-      const indicative=calculateQuote(parseUsdt(route.amount),reserves);
-      if(started!==el('amount').value||network!==el('network').value)return;
-      el('result').textContent=formatWei(indicative.amountOut,2);
-      el('quote-details').textContent=
-       'Ориентир по MTT Network; комиссия включена в предварительную модель. '
-       +'Точная котировка и минимальная выдача фиксируются при создании заявки. '
-       +'Оплата осуществляется только после готовности центрального подписанта.';
-      await updatePilotStatus();
-      return;
-    }
-    // This reads current on-chain MTT/USDT liquidity only. It is NOT a
-    // signed or executable MTT Swap quote, nor a promise of net output.
-    const reserves=await fetchLiveReserves();
-    const amount=parseUsdt(route.amount);
-    const indicative=calculateQuote(amount,reserves);
-    if(started!==el('amount').value||network!==el('network').value)return;
-    el('result').textContent=formatWei(indicative.amountOut,2);
-    el('quote-details').textContent='Ориентир по резервам MTT Network, блок '+reserves.block+
-      '. Не является котировкой MTT Swap. Не включены комиссии моста, сети BSC, газ и возможное проскальзывание. Реальный заказ не создан.';
-    toast('Расчёт выполнен. Переводы и оплата отключены.');
-  }catch{
-    el('result').textContent='—';
-    el('quote-details').textContent='Нет подтверждённой актуальной котировки. Не отправляйте деньги. Повторите проверку позже.';
-    toast('Публичный RPC не ответил — расчёт не выполнен.');
-  }finally{pending=false;refreshRoute();}
+  const order=renderOrder(res.order);
+  if(res.indicativeClientMtt){
+   el('result').textContent='≈ '+Number(res.indicativeClientMtt)
+    .toLocaleString('ru-RU',{maximumFractionDigits:0});
+  }
+  if(order.state==='awaiting_ton'&&!order.paymentUrl)
+   setFeedback('Срок оплаты заявки истёк. Не переводите средства.',true);
+ }catch(error){
+  setFeedback(pilotError(error),true);
+ }finally{placingOrder=false;setAction();}
 }
-el('quote').addEventListener('click',()=>void quote());
-// Intentional: there is no handler able to construct or broadcast a
-// transaction, display a payable deposit address or collect seed/private key.
+async function openTonPayment(){
+ if(!currentOrder||currentOrder.state!=='awaiting_ton')return;
+ try{
+  const url=linkForWallet(currentOrder);
+  if(!url)throw Error('Срок оплаты истёк. Не отправляйте деньги.');
+  // User action opens an external TON wallet to authorize the actual payment.
+  if(tg?.openLink)tg.openLink(url);
+  else window.open(url,'_blank','noopener,noreferrer');
+ }catch(error){toast(String(error.message||'Не удалось открыть TON-кошелёк'));}
+}
+async function copyText(value,label){
+ if(!value)return;
+ try{await navigator.clipboard.writeText(value);toast(label+' скопирован');}
+ catch{toast('Скопируйте значение вручную');}
+}
+async function bootSwap(){
+ const status=el('swap-message');
+ try{
+  const cfg=await fetch('./config.json',{cache:'no-store'});
+  if(!cfg.ok)throw Error('Не удалось подключить сервер обмена');
+  const json=await cfg.json();
+  gateway=typeof json.apiBaseUrl==='string'&&
+   /^https:\/\/[A-Za-z0-9.-]+/.test(json.apiBaseUrl)
+   ?json.apiBaseUrl.replace(/\/$/,''):null;
+  if(!gateway)throw Error('Сервис временно недоступен');
+  await getAuthenticatedWallet();
+  void refreshBackupStatus();
+  const existing=await loadPilotStatus();
+  if(!existing)await refreshQuote();
+ }catch(error){
+  setFeedback(String(error.message||'Сервис временно недоступен'),true);
+  quoteReady=false;setAction();
+ }
+}
+el('swap-main').addEventListener('click',async()=>{
+ if(!quoteReady)await refreshQuote();
+ else await createOrder();
+});
+el('swap-pay').addEventListener('click',()=>void openTonPayment());
+el('swap-back').addEventListener('click',()=>{
+ showStage('swap-input-stage');
+ setFeedback('Заявка сохранена. Для оплаты нажмите «Продолжить».');
+});
+el('swap-check-status').addEventListener('click',()=>void loadPilotStatus());
+el('swap-pay-status').addEventListener('click',async()=>{
+ const result=await loadPilotStatus();
+ if(result?.state==='awaiting_ton')toast('Платёж пока не найден. Если уже отправили — повторите через минуту.');
+});
+el('swap-again').addEventListener('click',()=>{
+ if(currentOrder?.state!=='completed')return;
+ currentOrder=null;quoteReady=false;lastQuoteAt=0;
+ showStage('swap-input-stage');void refreshQuote();
+});
+el('swap-show-payment').addEventListener('click',()=>renderOrder(currentOrder));
+el('swap-copy-ton').addEventListener('click',()=>copyText(
+ currentOrder?.centralTon,'Адрес'));
+el('swap-copy-memo').addEventListener('click',()=>copyText(
+ currentOrder?.memo,'Комментарий'));
+const openBot=()=>{
+ const url='https://t.me/GiftMutantBot?start=wallet';
+ if(tg?.openTelegramLink)tg.openTelegramLink(url);
+ else window.open(url,'_blank','noopener,noreferrer');
+};
+el('open-wallet-bot').addEventListener('click',openBot);
+updateRecipient();
+void bootSwap();
+window.setInterval(()=>{
+ if(currentOrder&&currentOrder.state!=='completed')void loadPilotStatus();
+},15000);

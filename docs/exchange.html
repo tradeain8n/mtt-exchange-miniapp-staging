@@ -10,87 +10,88 @@
 <link rel="stylesheet" href="./assets/exchange.css">
 <title>GiftMutant · Обмен и кошелёк</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-<script type="module" src="./assets/exchange.js"></script>
+<script type="module" src="./assets/exchange.js?v=4"></script>
 </head>
 <body>
 <div class="shell">
   <header class="masthead">
     <div class="brandmark" aria-hidden="true">M</div>
-    <div class="brandtitle"><strong>GiftMutant</strong><span>EXCHANGE · WALLET</span></div>
-    <div class="environment">STAGING</div>
+    <div class="brandtitle"><strong>GiftMutant</strong><span>Обмен · Кошелёк</span></div>
+
   </header>
-  <div class="hero">
-    <div class="eyebrow">БЫСТРЫЙ ОБМЕН</div>
-    <h1>USDT <span>→</span> MTT</h1>
-    <p>Пополнение в одной сети. MTT на личный адрес в MTT Network.</p>
-  </div>
   <nav class="tabs" aria-label="Разделы обменника">
     <button id="tab-swap" type="button" data-tab="swap" class="tab selected" aria-selected="true" aria-controls="view-swap"><span aria-hidden="true">⇄</span> Обмен</button>
     <button id="tab-wallet" type="button" data-tab="wallet" class="tab" aria-selected="false" aria-controls="view-wallet"><span aria-hidden="true">◫</span> Мой кошелёк</button>
   </nav>
   <main>
-    <section id="view-swap" class="view" aria-label="Обмен USDT на MTT">
-      <div class="panel input-panel">
-        <div class="panel-heading"><h2>Отдаёте</h2><span>Пилот · 3 USD₮</span></div>
-        <div class="amount-line">
-          <label for="amount" class="sr-only">Количество токенов</label>
-          <input id="amount" type="text" inputmode="decimal" value="3.00" maxlength="12" autocomplete="off" aria-describedby="route-state">
-          <div class="coin">₮ <strong id="source-token-title">USDT</strong></div>
+        <section id="view-swap" class="view" aria-label="Обмен USD₮ TON на MTT">
+      <div id="swap-input-stage">
+        <div class="swap-card">
+          <div class="swap-card-heading"><h1>Отдаёте</h1><span class="swap-token"><span class="swap-token-icon">₮</span> USD₮</span></div>
+          <div class="swap-big-amount">
+            <label for="amount" class="sr-only">Сумма USD₮</label>
+            <input id="amount" value="3.00" inputmode="decimal" readonly aria-label="Сумма обмена 3 USD₮">
+            <span>USDT</span>
+          </div>
+          <div class="swap-network-row">
+            <label for="network">Сеть списания</label>
+            <select id="network" aria-label="Сеть списания">
+              <option value="ton" selected>TON</option>
+            </select>
+          </div>
         </div>
-        <div class="input-divider"></div>
-        <label class="field-label" for="input-asset">Чем оплачиваете</label>
-        <select id="input-asset">
-          <option value="USDT">USDT · токен (в TON — официальный Jetton)</option>
-          <option value="TON">TON · монета (маршрут ещё не подтверждён)</option>
-        </select>
-        <p class="muted" id="asset-hint">USDT в TON — Jetton, не нативная монета TON. Не путайте эти активы.</p>
-        <div class="input-divider"></div>
-        <label class="field-label" for="network">Сеть оплаты USDT</label>
-        <select id="network" aria-describedby="network-hint">
-          <option value="bsc">BNB Smart Chain · BEP-20</option>
-          <option value="ton" selected>TON · USD₮ Jetton</option>
-        </select>
-        <p class="muted" id="network-hint">Для этой сделки выберите TON. Клиент оплачивает 3 USD₮ в сети TON; MTT поступают в сети MTT Network.</p>
+        <div class="swap-arrow-modern" aria-hidden="true">↓</div>
+        <div class="swap-card">
+          <div class="swap-card-heading"><h2>Получаете</h2><span class="swap-token mtt"><span class="swap-token-icon">✦</span> MTT</span></div>
+          <div class="swap-big-amount swap-amount-out"><output id="result" aria-live="polite">—</output><span>MTT</span></div>
+          <div class="swap-network-row">
+            <label for="destination-network">Сеть поступления</label>
+            <select id="destination-network" aria-label="Сеть поступления">
+              <option value="mtt" selected>MTT Network</option>
+            </select>
+          </div>
+          <div class="swap-wallet-row">
+            <label for="evm-recipient">На ваш кошелёк</label>
+            <input id="evm-recipient" readonly autocomplete="off" spellcheck="false" aria-label="Привязанный EVM адрес для получения MTT" placeholder="Подключаем кошелёк…">
+          </div>
+        </div>
+        <div class="swap-summary">
+          <span>Комиссия сервиса <strong>10%</strong></span>
+          <span id="quote-note">Получаем курс…</span>
+        </div>
+        <p id="swap-message" class="swap-feedback" role="status" aria-live="polite">Проверяем ваш кошелёк…</p>
+        <button id="swap-main" type="button" class="action action-primary" disabled>Проверяем обмен…</button>
       </div>
-      <div class="swap-arrow" aria-hidden="true">↓</div>
-      <div class="panel output-panel">
-        <div class="panel-heading"><h2>Получаете</h2><span>MTT</span></div>
-        <label class="field-label" for="destination-network">Сеть получения MTT</label>
-        <select id="destination-network" aria-label="Сеть получения MTT">
-          <option value="mtt" selected>MTT Network · Chain ID 6880</option>
-        </select>
-        <p class="muted">Выбрана сеть MTT Network — именно сюда будут зачислены MTT.</p>
-        <div class="amount-line output-line"><output id="result" aria-live="polite">—</output><div class="coin mtt-coin">✦ <strong>MTT</strong></div></div>
-        <div class="input-divider"></div>
-        <div class="destination"><span>Адрес получателя</span><strong id="recipient">Не выбран</strong></div>
-        <label class="field-label" for="evm-recipient">Куда отправить MTT · EVM (MTT Network 6880)</label>
-        <input class="evm-entry" id="evm-recipient" type="text" maxlength="42" spellcheck="false" autocapitalize="off" autocomplete="off" placeholder="0x… 40 символов" aria-describedby="evm-recipient-info">
-        <p id="evm-recipient-info" class="muted">Введите личный EVM-адрес; если открыли через кнопку кошелька, он заполнится автоматически. Только публичный адрес.</p>
-        <p class="muted">MTT будут отправлены на привязанный EVM-адрес после подтверждения оплаты USD₮ TON и исполнения обмена.</p>
+      <div id="swap-checkout" class="hidden">
+        <button id="swap-back" type="button" class="swap-back" aria-label="Вернуться к расчёту">‹ Назад</button>
+        <h2 class="swap-step-title">Оплата</h2>
+        <div class="swap-checkout-amount"><strong>3 USD₮</strong><span>TON</span></div>
+        <div class="swap-payment-detail">
+          <span>Получатель TON</span>
+          <code id="swap-ton-recipient"></code>
+          <button id="swap-copy-ton" type="button" class="swap-copy">Копировать адрес</button>
+        </div>
+        <div class="swap-payment-detail">
+          <span>Комментарий платежа</span>
+          <code id="swap-payment-memo"></code>
+          <button id="swap-copy-memo" type="button" class="swap-copy">Копировать комментарий</button>
+        </div>
+        <p class="swap-payment-warning">Отправляйте только USD₮ TON. При ручном переводе обязательно укажите комментарий.</p>
+        <button id="swap-pay" type="button" class="action action-primary">Открыть TON-кошелёк</button>
+        <button id="swap-pay-status" type="button" class="action action-secondary">Проверить оплату</button>
+        <div class="swap-result-recipient">MTT поступят на <strong id="swap-evm-target"></strong></div>
       </div>
-      <div class="notice notice-warning" id="route-state" role="status">
-        <strong>USD₮ TON → MTT Network</strong>
-        <span>Оплата проходит в сети TON. Получение MTT — в сети MTT Network (6880). Платёж подтверждается в TON-кошельке.</span>
-      </div>
-      <button id="quote" type="button" class="action action-primary">Рассчитать MTT за 3 USD₮</button>
-      <button id="pay" type="button" class="action action-locked" disabled aria-disabled="true">Оплата недоступна до проверки кошелька</button>
-      <p id="quote-details" class="helper" aria-live="polite">Курс не зафиксирован. Комиссии сети, газа и моста в расчёт не включены.</p>
-      <div id="ton-preflight" class="panel ton-preflight hidden">
-        <div class="panel-heading"><h2>Покупка за USD₮ TON</h2><span>3 USD₮</span></div>
-        <p class="muted">Оплата поступает на отдельный центральный TON-кошелёк GiftMutant. Из резерва 3 USDT в MTT Network покупаются MTT, из которых 90% отправляются на ваш личный EVM-адрес.</p>
-        <div class="staging-step"><span>1</span><div><strong>Вы подтверждаете платёж в TON-кошельке</strong><p>3 USD₮ официального Jetton, сумма и получатель фиксированы в заявке.</p></div></div>
-        <div class="staging-step"><span>2</span><div><strong>GiftMutant проверяет TON-транзакцию</strong><p>Сумма, источник, центральный получатель, комментарий и уникальный хеш сверяются в блокчейне.</p></div></div>
-        <div class="staging-step"><span>3</span><div><strong>Покупка MTT и выплата</strong><p>MTT Swap в сети 6880, комиссия 10%, защита от изменения котировки. Получатель — ваш привязанный EVM.</p></div></div>
-        <p id="ton-order-status" class="muted" role="status">Проверяем возможность создания заявки...</p>
-        <button id="ton-pilot-create" type="button" class="action action-primary" disabled>Оплатить 3 USD₮ в TON</button>
-        <button id="ton-pilot-refresh" type="button" class="action action-secondary">Проверить статус обмена</button>
-        <button id="ton-draft" type="button" class="action action-secondary hidden" disabled>Сохранить тестовую заявку</button>
-      </div>
-      <div class="section-heading"><h2>Как работает покупка</h2><span>Пилот</span></div>
-      <div class="steps">
-        <div class="step"><span>01</span><div><strong>USDT в выбранной сети</strong><p>Выбранная клиентом сеть и токен должны совпадать с заказом.</p></div></div>
-        <div class="step"><span>02</span><div><strong>MTT Swap / проверенный маршрут</strong><p>Котировка и комиссии подтверждаются перед исполнением, после чего проводится перевод.</p></div></div>
-        <div class="step"><span>03</span><div><strong>MTT Network → ваш EVM</strong><p>Результат сверяется по транзакции и отображается в истории операций.</p></div></div>
+      <div id="swap-order-stage" class="hidden">
+        <div class="swap-order-card">
+          <span class="swap-order-icon" aria-hidden="true">◴</span>
+          <h2 id="swap-order-heading">Проверяем оплату</h2>
+          <p id="swap-order-status" aria-live="polite">Ожидаем USD₮ TON</p>
+          <p id="swap-order-id" class="swap-order-id"></p>
+          <p id="swap-order-output" class="swap-order-output"></p>
+        </div>
+        <button id="swap-check-status" type="button" class="action action-secondary">Обновить статус</button>
+        <button id="swap-again" type="button" class="action action-primary hidden">Новый обмен</button>
+        <button id="swap-show-payment" type="button" class="swap-quiet hidden">Посмотреть реквизиты</button>
       </div>
     </section>
 
@@ -145,10 +146,6 @@
       <button id="open-wallet-bot" class="action action-secondary" type="button">Открыть GiftMutantBot</button>
     </section>
 
-    <section class="footer-panel">
-      <div class="footer-brand">MTT <span>EXCHANGE</span></div>
-      <p>Пилотный интерфейс. Не переводите средства, пока система не покажет подтверждённый депозитный адрес и условия исполнения.</p>
-    </section>
   </main>
   <div id="toast" class="toast hidden" role="status"></div>
 </div>

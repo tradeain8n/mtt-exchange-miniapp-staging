@@ -155,3 +155,68 @@ select{width:100%;appearance:none;border:1px solid #3c5e8a;background:#182e52;co
 .recovery-input-label input{width:100%;padding:17px 14px;border:1px solid #4c658a;border-radius:13px;background:#152642;color:#fff;font-size:17px;outline-offset:3px}
 .recovery-screen .notice{margin:18px 0}
 .recovery-screen .action{margin:10px 0}
+
+
+/* GiftMutant minimal exchange, 2026. Keep wallet styles independent. */
+body{background:radial-gradient(ellipse 80% 260px at 50% -90px,#153b7b66,transparent),#090f1f}
+.shell{max-width:500px;padding:0 18px calc(26px + env(safe-area-inset-bottom))}
+.masthead{height:75px}
+.brandmark{width:35px;height:35px;border-radius:12px;font-size:20px;box-shadow:none}
+.brandtitle strong{font-size:20px;letter-spacing:-.02em}
+.brandtitle span{letter-spacing:.02em;font-weight:550;font-size:11px;color:#8da4c3}
+.tabs{background:transparent;border:0;padding:0;margin:2px 0 23px;gap:24px;border-bottom:1px solid #202e47;border-radius:0}
+.tab{flex:0 0 auto;min-height:46px;background:none;border-radius:0;color:#8696b5;box-shadow:none;padding:0 7px;font-size:14px}
+.tab.selected{background:none;border-bottom:2px solid #5e9aff;box-shadow:none;color:#e9f2ff}
+.tab span{font-size:19px}
+#view-swap{padding-bottom:12px}
+.swap-card{border:1px solid #2a3c59;border-radius:23px;background:#142039;padding:20px 19px 15px}
+.swap-card-heading{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.swap-card-heading h1,.swap-card-heading h2{font-size:17px;font-weight:750;line-height:1.3;letter-spacing:-.01em;margin:0}
+.swap-token{border:1px solid #3b6174;border-radius:30px;background:#1b3e4d;padding:7px 11px;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:800;color:#e8faff;white-space:nowrap}
+.swap-token-icon{width:25px;height:25px;display:grid;place-items:center;border-radius:50%;background:#18a58a;color:#fff;font-size:19px}
+.swap-token.mtt{border-color:#455b89;background:#283653}
+.swap-token.mtt .swap-token-icon{background:#4865bb}
+.swap-big-amount{min-height:100px;display:flex;align-items:center;justify-content:space-between;gap:7px}
+.swap-big-amount input,.swap-big-amount output{background:transparent;border:0;outline:0;color:#f7faff;min-width:0;max-width:100%;width:100%;font-size:clamp(35px,9vw,48px);font-weight:800;line-height:1.1;letter-spacing:-.055em;padding:0;overflow-wrap:anywhere}
+.swap-big-amount input:focus{outline:0}
+.swap-big-amount>span{color:#99b0d2;font-size:13px;font-weight:700;white-space:nowrap}
+.swap-amount-out output{font-size:clamp(27px,7vw,43px);font-variant-numeric:tabular-nums}
+.swap-network-row,.swap-wallet-row{display:flex;align-items:center;justify-content:space-between;gap:12px;border-top:1px solid #293b55;min-height:54px}
+.swap-network-row label,.swap-wallet-row label{font-size:12px;color:#9aadc9;font-weight:600;white-space:nowrap}
+.swap-network-row select{width:auto;max-width:56%;border:0;background:#253754;color:#edf5ff;border-radius:11px;padding:9px 28px 9px 11px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath stroke='%23c4d8ff' stroke-width='3' fill='none' d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-size:13px;background-position:right 9px center;background-repeat:no-repeat;text-align:left;font-weight:700;font-size:12px}
+.swap-network-row select option{color:#eaf3ff;background:#18263d}
+.swap-wallet-row input{width:57%;min-width:0;border:0;background:transparent;color:#bcd8fa;text-overflow:ellipsis;font-size:11px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;text-align:right;outline:0}
+.swap-arrow-modern{width:38px;height:38px;display:grid;place-items:center;margin:-10px auto;border:5px solid #090f1f;border-radius:50%;position:relative;z-index:1;background:#2b5fa8;color:#f3f9ff;font-size:19px;font-weight:800}
+.swap-summary{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:16px 3px 3px;color:#91a6c4;font-size:12px}
+.swap-summary strong{color:#e5efff}
+#quote-note{color:#88bafa;text-align:right}
+.swap-feedback{font-size:12px;color:#a1b5d5;min-height:18px;line-height:1.45;margin:8px 3px 17px}
+.swap-feedback.error{color:#ffbe97}
+#swap-main,#swap-pay{min-height:55px;border-radius:16px;font-size:16px}
+#swap-main:disabled{opacity:.6}
+.swap-back{border:0;color:#8cb6ee;background:none;padding:12px 0;font-size:15px}
+.swap-step-title{font-size:27px;letter-spacing:-.04em;margin:12px 0}
+.swap-checkout-amount{display:flex;align-items:baseline;justify-content:space-between;margin:20px 0 24px;border-bottom:1px solid #324561;padding:16px 0 22px}
+.swap-checkout-amount strong{font-size:37px;line-height:1;letter-spacing:-.04em}
+.swap-checkout-amount>span{color:#a6bbd9;font-size:14px;font-weight:800}
+.swap-payment-detail{padding:15px 0;border-bottom:1px solid #253957;display:flex;flex-direction:column;gap:8px}
+.swap-payment-detail>span{font-size:12px;color:#a0b2cf}
+.swap-payment-detail code{font-size:13px;line-height:1.5;overflow-wrap:anywhere;color:#e0f0ff;background:#15243c;padding:12px;border-radius:10px}
+.swap-copy{align-self:flex-start;color:#8fbdff;background:none;border:none;padding:4px 0;font-size:12px;font-weight:800}
+.swap-payment-warning{color:#f0c58d;font-size:12px;line-height:1.5;margin:18px 0}
+.swap-result-recipient{color:#9fb4d3;font-size:12px;text-align:center;margin-top:16px}
+.swap-result-recipient strong{color:#c5d9f5}
+.swap-order-card{text-align:center;padding:28px 15px 20px}
+.swap-order-icon{display:grid;place-items:center;margin:0 auto 20px;width:64px;height:64px;background:#1e3965;border:1px solid #355b9c;border-radius:50%;font-size:34px;color:#a7cafa}
+.swap-order-card h2{font-size:24px;letter-spacing:-.035em}
+.swap-order-card p{color:#a8bad7;font-size:13px}
+.swap-order-card .swap-order-output{font-size:19px;color:#eaf5ff;font-weight:800}
+.swap-order-id{font-family:ui-monospace,monospace}
+.swap-quiet{margin-top:16px;border:0;background:transparent;color:#80b1ff;font-size:13px;width:100%;min-height:38px}
+#swap-check-status{margin-top:10px}
+@media(max-width:390px){
+ .shell{padding-left:14px;padding-right:14px}
+ .swap-card{padding:17px 15px 13px}
+ .swap-big-amount{min-height:91px}
+ .swap-network-row label,.swap-wallet-row label{font-size:11px}
+}

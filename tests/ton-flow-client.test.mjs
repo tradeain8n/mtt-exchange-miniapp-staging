@@ -62,15 +62,18 @@ test('Telegram initData is necessary for private draft and never becomes a depos
  assert.equal(result.ok,true);
  assert.equal(result.draft.status,'draft');
 });
-test('TON payment interface has explicit destination, only safe actions and no real invoice',()=>{
+test('checkout verifies order before showing native TON wallet payment link',()=>{
  const html=readFileSync('docs/exchange.html','utf8');
  const js=readFileSync('docs/assets/exchange.js','utf8');
  assert.match(html,/id="evm-recipient"/);
- assert.match(html,/id="ton-preflight"/);
- assert.match(html,/id="input-asset"/);
- assert.match(html,/value="ton" selected/);
- assert.match(js,/createTonDraft/);
- assert.match(js,/fetchTonPreview/);
- assert.match(js,/el\('pay'\)\.disabled=true/);
+ assert.match(html,/id="swap-ton-recipient"/);
+ assert.match(html,/id="swap-payment-memo"/);
+ assert.match(html,/id="swap-pay"/);
+ assert.match(html,/id="swap-pay-status"/);
+ assert.match(html,/id="swap-order-status"/);
+ assert.match(js,/getAuthenticatedWallet/);
+ assert.match(js,/assertPilotOrder/);
+ assert.match(js,/linkForWallet/);
+ assert.match(js,/https:\/\/app\.tonkeeper\.com\/transfer/);
  assert.doesNotMatch(js,/sendViaWallet|eth_sendTransaction|sendTransaction\(/);
 });

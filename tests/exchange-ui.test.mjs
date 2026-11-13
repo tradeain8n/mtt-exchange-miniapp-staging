@@ -13,28 +13,23 @@ test('exchange root and Telegram blue menu point to the new interface',()=>{
  assert.match(config,/menu\.web_app\?\.url!==appUrl/);
  assert.match(action,/miniapp-staging\/exchange\.html/);
 });
-test('interface has a wallet tab and safe, disabled payment control',()=>{
+test('minimal exchange has only amount, two networks, receiving wallet and real checkout',()=>{
  const html=read('../docs/exchange.html');
  const js=read('../docs/assets/exchange.js');
  const css=read('../docs/assets/exchange.css');
- assert.match(html,/id="tab-swap"/);
- assert.match(html,/id="tab-wallet"/);
- assert.match(html,/id="wallet-evm"/);
- assert.match(html,/id="network"/);
- assert.match(html,/for="network">Сеть оплаты USDT/);
- assert.match(html,/id="destination-network"/);
- assert.match(html,/for="destination-network">Сеть получения MTT/);
- assert.match(html,/<option value="mtt" selected>MTT Network/);
- assert.doesNotMatch(html,/<option value="mtt" disabled>/);
- assert.match(js,/destination==='mtt'/);
- assert.match(js,/USD₮ TON → MTT Network/);
+ for(const id of ['tab-swap','tab-wallet','wallet-evm','amount','network',
+  'destination-network','evm-recipient','result','swap-main','swap-pay',
+  'swap-check-status','swap-order-status','swap-payment-memo'])
+  assert.match(html,new RegExp('id="'+id+'"'));
+ assert.match(html,/<option value="ton" selected>TON<\/option>/);
+ assert.match(html,/<option value="mtt" selected>MTT Network<\/option>/);
  assert.match(html,/value="3\.00"/);
- assert.match(html,/id="pay"[^>]*disabled/);
- assert.match(html,/assets\/exchange\.js/);
- assert.match(js,/el\('pay'\)\.disabled=true/);
- assert.match(js,/fetchLiveReserves/);
- assert.match(js,/Не отправляйте деньги/);
- assert.doesNotMatch(js,/sendTransaction|eth_sendTransaction|privateKey|Wallet\.from/);
- assert.match(css,/\.wallet-card/);
- assert.match(css,/\.tabs/);
+ assert.doesNotMatch(html,/ton-pilot-create|ton-preflight|route-state|steps|Пилот/);
+ assert.match(js,/getAuthenticatedWallet/);
+ assert.match(js,/pilotRequest/);
+ assert.match(js,/app\.tonkeeper\.com\/transfer/);
+ assert.match(js,/refreshQuote/);
+ assert.doesNotMatch(js,/privateKey|seedPhrase|sendTransaction|eth_sendTransaction/);
+ assert.match(css,/\.swap-card-heading/);
+ assert.match(css,/\.swap-big-amount/);
 });

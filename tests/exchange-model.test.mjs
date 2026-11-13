@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {DEFAULT_AMOUNT,PILOT,NETWORKS,readWalletFragment,buildWalletFragment,evaluateRoute} from '../docs/assets/exchange-model.js';
 const wallet={evm:'0x'+'ab'.repeat(20),ton:'UQ'+'b'.repeat(46),tron:'T'+'A'.repeat(33),near:'ac'.repeat(32)};
 test('minimal $2 USDT BSC route is only a non-executable preview',()=>{
- assert.equal(DEFAULT_AMOUNT,'2.00');
+ assert.equal(DEFAULT_AMOUNT,'3.00');
  assert.equal(PILOT.targetChainId,6880);
  const route=evaluateRoute({network:'bsc',token:'USDT',amount:'2.00'});
  assert.equal(route.ok,true);
@@ -13,7 +13,7 @@ test('minimal $2 USDT BSC route is only a non-executable preview',()=>{
  assert.equal(route.canDeposit,false);
  assert.equal(route.canExecute,false);
  assert.equal(route.liveQuote,false);
- assert.equal(NETWORKS.filter(x=>x.usable).length,1);
+ assert.equal(NETWORKS.filter(x=>x.usable).length,2);
 });
 test('all other networks and tokens fail closed to prevent wrong-chain deposits',()=>{
  for(const network of ['polygon','ethereum','tron','near']){
@@ -23,8 +23,12 @@ test('all other networks and tokens fail closed to prevent wrong-chain deposits'
  }
  const tonTooSmall=evaluateRoute({network:'ton',token:'USDT',amount:'2'});
  assert.equal(tonTooSmall.ok,false);
- assert.match(tonTooSmall.reason,/3 USDT/);
- assert.equal(evaluateRoute({network:'ton',token:'USDT',amount:'3.5'}).previewOnly,true);
+ assert.match(tonTooSmall.reason,/3 USD₮ TON/);
+ assert.equal(evaluateRoute({network:'ton',token:'USDT',amount:'3.5'}).ok,false);
+ const pilot=evaluateRoute({network:'ton',token:'USDT',amount:'3'});
+ assert.equal(pilot.ok,true);
+ assert.equal(pilot.recipientNetwork,'MTT Network');
+ assert.equal(pilot.destinationChainId,6880);
  assert.equal(evaluateRoute({network:'bsc',token:'USDC',amount:'2'}).ok,false);
  assert.equal(evaluateRoute({network:'bsc',token:'USDT',amount:'0.5'}).ok,false);
  assert.equal(evaluateRoute({network:'bsc',token:'USDT',amount:'21'}).ok,false);

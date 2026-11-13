@@ -222,3 +222,22 @@ body{background:radial-gradient(ellipse 80% 260px at 50% -90px,#153b7b66,transpa
 }
 
 .swap-minimum-mtt{font-size:13px;line-height:1.45;font-weight:750;color:#a9d7fa;margin:-8px 0 18px}
+
+
+/* Native MTT wallet send - deliberately single clear confirmation surface. */
+.wallet-send-panel{margin:16px 0;padding:19px}
+.wallet-send-panel .panel-heading{align-items:center}
+.wallet-send-panel .panel-heading h2{font-size:21px}
+.wallet-send-close{border:1px solid #496183;background:#213454;color:#d6e7fd;border-radius:11px;width:37px;height:37px}
+.wallet-send-panel .field-label{margin-top:18px;margin-bottom:8px}
+.wallet-send-amount-label{margin-top:15px}
+.wallet-send-panel .evm-entry{width:100%;font-size:15px;min-height:49px}
+.wallet-send-preview{margin-top:18px;padding:15px;border-radius:16px;background:#1b3051;border:1px solid #3b5e88}
+.wallet-send-preview>div{display:flex;justify-content:space-between;gap:10px;align-items:start;padding:9px 0;border-bottom:1px solid #344c6e}
+.wallet-send-preview>div span{font-size:12px;color:#a3b9da;flex-shrink:0}
+.wallet-send-preview>div strong,.wallet-send-preview>div code{font-size:12px;color:#ebf3ff;text-align:right;overflow-wrap:anywhere;max-width:65%}
+.wallet-send-preview .action{margin-top:16px}
+.wallet-send-status{font-size:13px;color:#abd2fa;min-height:1em;line-height:1.5;margin:15px 0}
+.wallet-send-status.error{color:#ffb3a9}
+.wallet-send-panel .action{margin-top:10px}
+.wallet-send-panel .action-secondary{min-height:44px}

@@ -1,1 +1,6 @@
-{"apiBaseUrl":null,"exchangeState":"staging_offline","network":"BNB Smart Chain","version":"staging-1.0.0"}
+{
+  "apiBaseUrl": "https://pdf-circus-ivory-reggae.trycloudflare.com",
+  "exchangeState": "staging_backup_only",
+  "network": "BNB Smart Chain",
+  "version": "staging-1.1.0"
+}

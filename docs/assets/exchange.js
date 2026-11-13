@@ -138,6 +138,107 @@ el('wallet-swap').addEventListener('click',()=>{
 });
 
 el('evm-recipient').value=wallet.evm||'';
+// HOT Wallet compatibility: public address only. The server derives
+// supported TON profiles from the encrypted seed and requires an exact match.
+let compatibleTon=null;
+let hotCheckRunning=false;
+async function tonCompatRequest(action,params={}){
+ if(!gateway||!tg?.initData)throw Error('Откройте кошелёк через GiftMutantBot в Telegram.');
+ const response=await fetch(gateway+'/api/wallet/ton/compat/'+action,{
+  method:'POST',headers:{'content-type':'application/json'},cache:'no-store',
+  credentials:'omit',referrerPolicy:'no-referrer',
+  body:JSON.stringify({initData:tg.initData,...params}),
+  signal:AbortSignal.timeout(14000)
+ });
+ const json=await response.json();
+ if(!response.ok){
+  const errors={
+   wallet_compat_offline:'Проверка TON временно недоступна.',
+   telegram_session_expired:'Сессия Telegram устарела. Откройте кошелёк заново из бота.',
+   backup_confirmation_required:'Сначала сохраните и подтвердите 12 слов.',
+   ton_profile_not_reproducible:'Этот TON-адрес нельзя восстановить из сохранённой seed-фразы.'
+  };
+  throw Error(errors[json.error]||'Ошибка проверки TON-адреса.');
+ }
+ return json;
+}
+function showLegacyTon(original){
+ const note=el('wallet-hot-previous');
+ note.classList.toggle('hidden',!original);
+ if(original)note.textContent='Предыдущий TON-адрес сохранён: '+original;
+}
+async function refreshTonCompatibilityStatus(){
+ if(!gateway||!tg?.initData)return;
+ try{
+  const data=await tonCompatRequest('status');
+  const current=data.wallet;
+  if(wallet.evm&&current.evm.toLowerCase()!==wallet.evm.toLowerCase()){
+   el('wallet-hot-report').textContent='Адрес EVM не совпадает с текущим Telegram-аккаунтом. Откройте кошелёк заново из бота.';
+   return;
+  }
+  wallet.evm=current.evm;
+  wallet.ton=current.ton;
+  walletScreen();
+  showLegacyTon(current.tonOriginal);
+  if(context.tab==='wallet')void refreshPortfolio();
+  if(current.tonOriginal)el('wallet-hot-report').textContent=
+   'Текущий TON-адрес подтверждён. Старый адрес сохранён отдельно.';
+ }catch{/* Keep previous public wallet info when the gateway is unavailable. */}
+}
+el('wallet-hot-ton').addEventListener('input',()=>{
+ compatibleTon=null;el('wallet-hot-apply').disabled=true;
+});
+el('wallet-hot-verify').addEventListener('click',async()=>{
+ if(hotCheckRunning)return;
+ const target=el('wallet-hot-ton').value.trim();
+ if(!/^(?:[EU]Q[A-Za-z0-9_-]{46}|(?:0|-1):[0-9a-fA-F]{64})$/.test(target)){
+  el('wallet-hot-report').textContent='Вставьте полный публичный TON-адрес из HOT Wallet.';
+  return;
+ }
+ hotCheckRunning=true;compatibleTon=null;
+ el('wallet-hot-apply').disabled=true;
+ el('wallet-hot-verify').disabled=true;
+ el('wallet-hot-report').textContent='Сравниваем варианты TON-адреса…';
+ try{
+  const r=await tonCompatRequest('preview',{tonAddress:target});
+  if(!r.matched){
+   el('wallet-hot-report').textContent=
+    'У поддерживаемых вариантов TON V3/V4/V5 такого адреса нет. Исходный адрес сохранён. Ключи и seed-фразу сюда не вводите.';
+   return;
+  }
+  compatibleTon={target,profile:r.candidate.profile};
+  if(r.candidate.address===r.currentTon){
+   el('wallet-hot-report').textContent='Адрес уже совпадает с GiftMutant.';
+   return;
+  }
+  el('wallet-hot-report').textContent=
+   'Совпадение найдено: '+r.candidate.walletVersion.toUpperCase()+
+   ', путь '+r.candidate.derivationPath+
+   (r.backupConfirmed
+    ?'. Можно выбрать этот TON-адрес, старый останется доступен.'
+    :'. Для применения сначала подтвердите резервную фразу на странице кошелька.');
+  el('wallet-hot-apply').disabled=!r.backupConfirmed;
+ }catch(e){el('wallet-hot-report').textContent=e.message;}
+ finally{hotCheckRunning=false;el('wallet-hot-verify').disabled=false;}
+});
+el('wallet-hot-apply').addEventListener('click',async()=>{
+ if(!compatibleTon||hotCheckRunning)return;
+ hotCheckRunning=true;el('wallet-hot-apply').disabled=true;
+ try{
+  const r=await tonCompatRequest('select',{
+   tonAddress:compatibleTon.target,confirm:'USE_MATCHED_TON'
+  });
+  if(wallet.evm&&r.wallet.evm.toLowerCase()!==wallet.evm.toLowerCase())
+   throw Error('После переключения EVM-адрес изменился — операция прервана.');
+  wallet.ton=r.wallet.ton;
+  walletScreen();
+  showLegacyTon(r.wallet.tonOriginal);
+  compatibleTon=null;
+  el('wallet-hot-report').textContent='TON-адрес обновлён и восстановим из той же seed-фразы. EVM остался прежним.';
+  void refreshPortfolio();
+ }catch(e){el('wallet-hot-report').textContent=e.message;}
+ finally{hotCheckRunning=false;}
+});
 async function refreshBackupStatus(){
  if(!gateway||!tg?.initData)return;
  try{
@@ -165,6 +266,7 @@ async function loadTonGateway(){
   }catch{}
   refreshRoute();
   void refreshBackupStatus();
+  void refreshTonCompatibilityStatus();
 }
 void loadTonGateway();
 

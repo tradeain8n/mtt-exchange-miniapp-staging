@@ -266,6 +266,7 @@ function renderOrder(order){
     :data.state==='manual_review'
      ?'Требуется проверка. Повторно USD₮ не отправляйте.'
      :'Проверяем транзакции в блокчейне.';
+  el('swap-again').classList.toggle('hidden',data.state!=='completed');
   el('swap-order-id').textContent='Заявка № '+data.id.slice(0,8);
   el('swap-order-output').textContent=data.payoutMttWei
    ?'Получено '+formatWei(BigInt(data.payoutMttWei),2)+' MTT':'';
@@ -345,10 +346,19 @@ el('swap-main').addEventListener('click',async()=>{
 });
 el('swap-pay').addEventListener('click',()=>void openTonPayment());
 el('swap-back').addEventListener('click',()=>{
- if(currentOrder)renderOrder(currentOrder);
- else showStage('swap-input-stage');
+ showStage('swap-input-stage');
+ setFeedback('Заявка сохранена. Для оплаты нажмите «Продолжить».');
 });
 el('swap-check-status').addEventListener('click',()=>void loadPilotStatus());
+el('swap-pay-status').addEventListener('click',async()=>{
+ const result=await loadPilotStatus();
+ if(result?.state==='awaiting_ton')toast('Платёж пока не найден. Если уже отправили — повторите через минуту.');
+});
+el('swap-again').addEventListener('click',()=>{
+ if(currentOrder?.state!=='completed')return;
+ currentOrder=null;quoteReady=false;lastQuoteAt=0;
+ showStage('swap-input-stage');void refreshQuote();
+});
 el('swap-show-payment').addEventListener('click',()=>renderOrder(currentOrder));
 el('swap-copy-ton').addEventListener('click',()=>copyText(
  currentOrder?.centralTon,'Адрес'));

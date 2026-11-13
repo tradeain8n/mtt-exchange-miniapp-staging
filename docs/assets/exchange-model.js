@@ -3,11 +3,8 @@ export const DEFAULT_AMOUNT = '2.00';
 export const PILOT = Object.freeze({network:'bsc',token:'USDT',target:'MTT',targetChainId:6880});
 export const NETWORKS = Object.freeze([
   {id:'bsc',label:'BNB Smart Chain · BEP-20',usable:true},
-  {id:'polygon',label:'Polygon',usable:false},
-  {id:'ethereum',label:'Ethereum',usable:false},
   {id:'ton',label:'TON · USDT Jetton (проверка)',usable:false},
-  {id:'tron',label:'TRON',usable:false},
-  {id:'near',label:'NEAR',usable:false}
+  {id:'mtt',label:'MTT Network · обмен позже',usable:false}
 ]);
 export const TOKENS=Object.freeze(['USDT','USDC']);
 export const WALLET_CHAINS=Object.freeze(['evm','ton','tron','near']);

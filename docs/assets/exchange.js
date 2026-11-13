@@ -1,3 +1,4 @@
+import {pilotRequest,assertPilotOrder} from './giftmutant-pilot.js';
 import {loadChainPortfolio,NETWORKS_WALLET,explorerHistoryUrl} from './wallet-portfolio.js';
 import {parseUsdt,formatWei,fetchLiveReserves,calculateQuote} from './quote.js';
 import {NETWORKS,DEFAULT_AMOUNT,evaluateRoute,readWalletFragment} from './exchange-model.js';
@@ -169,6 +170,7 @@ async function loadTonGateway(){
   }catch{}
   refreshRoute();
   void refreshBackupStatus();
+  void updatePilotStatus();
 }
 void loadTonGateway();
 
@@ -209,11 +211,69 @@ function refreshRoute(){
   el('quote').textContent=route.ok
     ?(network==='ton'?'Проверить мост TON и лимиты':'Рассчитать ориентир для '+route.amount+' USDT')
     :'Выберите поддерживаемый маршрут';
-  el('ton-draft').disabled=!(network==='ton'&&route.ok&&gateway&&tg?.initData&&isEvmAddress(recipient)&&!pending);
+  el('ton-draft').disabled=true;
+  el('ton-pilot-create').disabled=!(network==='ton'&&route.ok&&
+    route.amount==='3.00'&&gateway&&tg?.initData&&wallet?.ton&&wallet?.evm&&
+    recipient.toLowerCase()===wallet.evm.toLowerCase()&&!pending);
   el('pay').disabled=true;
   return route;
 }
 refreshRoute();
+const pilotError=error=>{
+ const reasons={
+  treasury_signer_not_armed:'Центральный подписант ещё не разблокирован на ТВ-боксе. Деньги пока не переводите.',
+  treasury_autosigner_not_ready:'Сервис выплат ещё не готов. Деньги пока не переводите.',
+  treasury_inventory_insufficient:'Недостаточно ликвидности на центральном кошельке.',
+  wallet_backup_not_confirmed:'Сначала подтвердите сохранение 12 слов кошелька.',
+  unsupported_amount_or_recipient:'Для пилота допускаются только 3 USD₮ и ваш привязанный EVM.',
+  telegram_session_expired:'Откройте мини-приложение заново через GiftMutantBot.'
+ };
+ return reasons[error.message]||'Заявка недоступна: '+error.message;
+};
+async function updatePilotStatus(){
+ if(!gateway||!tg?.initData||!wallet?.evm||!wallet?.ton)return;
+ try{
+  const response=await pilotRequest({base:gateway,initData:tg.initData,action:'status'});
+  if(!response.order){
+   el('ton-order-status').textContent='Новая заявка ещё не создана. Для оплаты потребуется подтверждение в TON-кошельке.';
+   return;
+  }
+  const order=assertPilotOrder(response.order,wallet.evm,wallet.ton);
+  const labels={awaiting_ton:'Ожидаем 3 USD₮ в TON',
+   ton_confirmed:'USD₮ TON получены. Подготавливаем покупку MTT',
+   approval_pending:'Подтверждаем разрешение на обмен в MTT Network',
+   approved:'Покупка MTT подготовлена',
+   swap_pending:'MTT Swap выполняет покупку',
+   swap_confirmed:'MTT куплены. Готовится выплата',
+   payout_pending:'Переводим MTT на ваш EVM',
+   completed:'MTT доставлены на ваш EVM',
+   manual_review:'Нужна проверка оператора'};
+  el('ton-order-status').textContent='Заявка '+order.id.slice(0,8)+': '+
+   (labels[order.state]||order.state)+
+   (order.payoutHash?' · MTT TX '+order.payoutHash.slice(0,12)+'…':'');
+ }catch(error){el('ton-order-status').textContent=pilotError(error);}
+}
+el('ton-pilot-refresh').addEventListener('click',()=>void updatePilotStatus());
+el('ton-pilot-create').addEventListener('click',async()=>{
+ const route=refreshRoute();
+ if(pending||route.network!=='ton'||route.amount!=='3.00'||!wallet?.ton)return;
+ pending=true;el('ton-pilot-create').disabled=true;
+ try{
+  const response=await pilotRequest({base:gateway,initData:tg.initData,
+   action:'create',recipientEvm:wallet.evm});
+  const order=assertPilotOrder(response.order,wallet.evm,wallet.ton);
+  el('ton-order-status').textContent=
+   'Заявка '+order.id.slice(0,8)+' оформлена. Отправьте ровно 3 USD₮ TON на указанный адрес с прикреплённым комментарием. Подтвердите платёж в TON-кошельке.';
+  el('result').textContent=response.indicativeClientMtt
+   ?Number(response.indicativeClientMtt).toLocaleString('ru-RU',{maximumFractionDigits:2})
+   :'—';
+  el('quote-details').textContent='Ориентир по реальной котировке, комиссия 10%. Минимальный выход: '+
+   (response.minClientMtt||'—')+' MTT. Подписание TON-транзакции только в вашем кошельке.';
+  if(order.paymentUrl)window.location.href=order.paymentUrl;
+  else el('ton-order-status').textContent='Новая оплата недоступна: заявка уже обрабатывается.';
+ }catch(error){el('ton-order-status').textContent=pilotError(error);}
+ finally{pending=false;refreshRoute();}
+});
 el('ton-draft').addEventListener('click',async()=>{
   const route=refreshRoute();
   if(!route.ok||route.network!=='ton'||!gateway||!tg?.initData)return;
@@ -233,18 +293,15 @@ async function quote(){
   const network=el('network').value;
   try{
     if(route.network==='ton'){
-      const preview=await fetchTonPreview({baseUrl:gateway,
-        amount:route.amount,recipient:el('evm-recipient').value.trim()});
-      if(preview?.ok&&preview.bridge?.ok){
-        const b=preview.bridge;
-        el('ton-order-status').textContent='SideShift: мин. '+b.depositMin+
-          ' USDT; макс. '+b.depositMax+' USDT. Лимит '+(b.minMet?'выполнен':'НЕ выполнен')+
-          '. Исполнимой двухэтапной котировки и платёжного адреса пока нет.';
-      }else{
-        el('ton-order-status').textContent='Шлюз проверки TON недоступен или партнёрская авторизация отсутствует. Заказ и адрес для перевода не создаются.';
-      }
-      el('result').textContent='—';
-      el('quote-details').textContent='Прогноз количества MTT нельзя считать без живой цены TON→BSC, комиссии моста и котировки MTT Swap. Не переводите USDT/TON.';
+      const reserves=await fetchLiveReserves();
+      const indicative=calculateQuote(parseUsdt(route.amount),reserves);
+      if(started!==el('amount').value||network!==el('network').value)return;
+      el('result').textContent=formatWei(indicative.amountOut,2);
+      el('quote-details').textContent=
+       'Ориентир по MTT Network; комиссия включена в предварительную модель. '
+       +'Точная котировка и минимальная выдача фиксируются при создании заявки. '
+       +'Оплата осуществляется только после готовности центрального подписанта.';
+      await updatePilotStatus();
       return;
     }
     // This reads current on-chain MTT/USDT liquidity only. It is NOT a

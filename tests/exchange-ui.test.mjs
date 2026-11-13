@@ -1,0 +1,33 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+const read=p=>readFileSync(new URL(p,import.meta.url),'utf8');
+test('exchange root and Telegram blue menu point to the new interface',()=>{
+ const index=read('../docs/index.html');
+ const config=read('../scripts/configure_bot.mjs');
+ const action=read('../.github/workflows/configure-bot.yml');
+ assert.match(index,/exchange\.html/);
+ assert.doesNotMatch(index,/url=\.\/yaako\.html/);
+ assert.match(config,/text:'💱 Обменник'/);
+ assert.match(config,/type:'web_app'/);
+ assert.match(config,/menu\.web_app\?\.url!==appUrl/);
+ assert.match(action,/miniapp-staging\/exchange\.html/);
+});
+test('interface has a wallet tab and safe, disabled payment control',()=>{
+ const html=read('../docs/exchange.html');
+ const js=read('../docs/assets/exchange.js');
+ const css=read('../docs/assets/exchange.css');
+ assert.match(html,/id="tab-swap"/);
+ assert.match(html,/id="tab-wallet"/);
+ assert.match(html,/id="wallet-evm"/);
+ assert.match(html,/id="network"/);
+ assert.match(html,/value="2\.00"/);
+ assert.match(html,/id="pay"[^>]*disabled/);
+ assert.match(html,/assets\/exchange\.js/);
+ assert.match(js,/el\('pay'\)\.disabled=true/);
+ assert.match(js,/fetchLiveReserves/);
+ assert.match(js,/Не отправляйте деньги/);
+ assert.doesNotMatch(js,/sendTransaction|eth_sendTransaction|privateKey|Wallet\.from/);
+ assert.match(css,/\.wallet-card/);
+ assert.match(css,/\.tabs/);
+});

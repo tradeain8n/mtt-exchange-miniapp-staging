@@ -1,5 +1,5 @@
 const token=process.env.TELEGRAM_BOT_TOKEN;
-const appUrl=process.env.MINIAPP_URL||'https://tradeain8n.github.io/mtt-exchange-miniapp-staging/yaako.html';
+const appUrl=process.env.MINIAPP_URL||'https://tradeain8n.github.io/mtt-exchange-miniapp-staging/exchange.html';
 const expectedUsername='giftmutantbot';
 if(!token)throw Error('TELEGRAM_BOT_TOKEN GitHub Secret is missing');
 if(!appUrl.startsWith('https://'))throw Error('Telegram Mini App requires HTTPS');
@@ -15,9 +15,10 @@ async function api(method,body){
 }
 const me=await api('getMe',{});
 if(String(me.username||'').toLowerCase()!==expectedUsername)throw Error('Secret does not belong to GiftMutantBot');
-// A short command menu leads to the /start wallet instead of the obsolete
-// registration wizard. The Yaako Mini App remains available from /start.
-await api('setChatMenuButton',{menu_button:{type:'commands'}});
+// The persistent blue Telegram menu opens our own exchange Mini App.
+await api('setChatMenuButton',{menu_button:{
+  type:'web_app',text:'💱 Обменник',web_app:{url:appUrl}
+}});
 const minimalCommands=[
   {command:'start',description:'Главная · личный кошелёк'},
   {command:'wallet',description:'Мой кошелёк · адреса сетей'},
@@ -33,7 +34,7 @@ await api('setMyDescription',{description:
 const menu=await api('getChatMenuButton',{});
 const commands=await api('getMyCommands',{});
 const webhook=await api('getWebhookInfo',{});
-if(menu.type!=='commands'){
+if(menu.type!=='web_app'||menu.web_app?.url!==appUrl||menu.text!=='💱 Обменник'){
   throw Error('Telegram menu configuration could not be verified');
 }
 if(commands.length!==minimalCommands.length || !minimalCommands.every(x=>commands.some(c=>c.command===x.command))){
@@ -42,7 +43,7 @@ if(commands.length!==minimalCommands.length || !minimalCommands.every(x=>command
 console.log('BOT_MENU_VERIFIED',JSON.stringify({
   bot_id:me.id,username:me.username,
   has_main_web_app:me.has_main_web_app===true,
-  menu_type:menu.type,
+  menu_type:menu.type,menu_url:menu.web_app.url,
   commands:commands.map(x=>x.command),
   webhook_configured:Boolean(webhook.url)
 }));

@@ -32,7 +32,7 @@ function tab(value){
     el('tab-'+item).setAttribute('aria-selected',String(selected));
     el('view-'+item).classList.toggle('hidden',!selected);
   }
-  if(current==='wallet')void refreshPortfolio();
+  if(current==='wallet'){void refreshPortfolio();void refreshBackupStatus();}
 }
 document.querySelectorAll('.tab').forEach(b=>
   b.addEventListener('click',()=>tab(b.dataset.tab)));
@@ -138,12 +138,33 @@ el('wallet-swap').addEventListener('click',()=>{
 });
 
 el('evm-recipient').value=wallet.evm||'';
+async function refreshBackupStatus(){
+ if(!gateway||!tg?.initData)return;
+ try{
+  const response=await fetch(gateway+'/api/wallet/backup/status',{
+   method:'POST',headers:{'content-type':'application/json'},
+   cache:'no-store',credentials:'omit',referrerPolicy:'no-referrer',
+   body:JSON.stringify({initData:tg.initData}),
+   signal:AbortSignal.timeout(9000)
+  });
+  if(!response.ok)return;
+  const result=await response.json();
+  if(result.backupStatus==='confirmed'){
+   const panel=el('wallet-backup-notice');
+   panel.querySelector('strong').textContent='Резервная фраза подтверждена';
+   panel.querySelector('span').textContent=
+    'Вы успешно проверили сохранённые слова. Реальные депозиты и переводы ещё не включены.';
+   el('wallet-backup').textContent='Кошелёк подтверждён';
+  }
+ }catch{/* No false-positive backup confirmation on error. */}
+}
 async function loadTonGateway(){
   try{
     const response=await fetch('./config.json',{cache:'no-store'});
     if(response.ok)gateway=normalizeAppApi(await response.json());
   }catch{}
   refreshRoute();
+  void refreshBackupStatus();
 }
 void loadTonGateway();
 

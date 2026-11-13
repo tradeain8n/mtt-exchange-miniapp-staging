@@ -135,3 +135,23 @@ select{width:100%;appearance:none;border:1px solid #3c5e8a;background:#182e52;co
 .wallet-security-note{margin-top:15px}
 .wallet-addresses{margin-top:18px}
 @media(max-width:370px){.wallet-quick-actions button{font-size:10px;min-height:90px}.wallet-quick-actions button>span{font-size:25px}.wallet-heading h1{font-size:27px}}
+
+
+/* GiftMutant local recovery wizard: readable on small Telegram WebViews. */
+.recovery-screen{max-width:540px;padding-bottom:40px}
+.recovery-screen .masthead{margin-bottom:28px}
+.recovery-back{display:block;color:#a8cafa;text-decoration:none;font-size:13px;padding:10px 0;margin:8px 0 16px}
+.recovery-title>span{color:#74b9f8;font-size:12px;font-weight:800;letter-spacing:.1em}
+.recovery-title h1{font-size:29px;line-height:1.16;letter-spacing:-.035em;color:#f6f9ff;margin:12px 0 15px}
+.recovery-title p{font-size:14px;line-height:1.65;color:#aec2de;margin-bottom:22px}
+.recovery-words{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:22px 0}
+.recovery-word{background:#192b4e;border:1px solid #4c648a;border-radius:12px;display:flex;align-items:center;gap:10px;padding:13px 9px;overflow-wrap:anywhere}
+.recovery-word span{color:#91a8ce;font-size:12px;min-width:20px}
+.recovery-word strong{color:#f4f8ff;font-size:15px}
+.recovery-ack{display:flex;align-items:flex-start;gap:11px;margin:20px 0;color:#bdcee7;font-size:13px;line-height:1.6}
+.recovery-ack input{width:19px;height:19px;flex:none;accent-color:#72b9fa;margin:2px 0 0}
+.recovery-inputs{display:grid;gap:14px;margin:27px 0}
+.recovery-input-label{display:flex;flex-direction:column;gap:8px;color:#dce8ff;font-size:14px;font-weight:700}
+.recovery-input-label input{width:100%;padding:17px 14px;border:1px solid #4c658a;border-radius:13px;background:#152642;color:#fff;font-size:17px;outline-offset:3px}
+.recovery-screen .notice{margin:18px 0}
+.recovery-screen .action{margin:10px 0}

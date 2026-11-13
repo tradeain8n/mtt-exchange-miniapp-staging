@@ -1,3 +1,4 @@
+import {loadChainPortfolio,NETWORKS_WALLET,explorerHistoryUrl} from './wallet-portfolio.js';
 import {parseUsdt,formatWei,fetchLiveReserves,calculateQuote} from './quote.js';
 import {NETWORKS,DEFAULT_AMOUNT,evaluateRoute,readWalletFragment} from './exchange-model.js';
 import {normalizeAppApi,isEvmAddress,fetchTonPreview,createTonDraft}
@@ -15,6 +16,8 @@ const fmt=x=>x.length>26?x.slice(0,10)+'…'+x.slice(-8):x;
 let pending=false;
 let gateway=null;
 let toastTimer=null;
+let currentWalletNetwork='mtt';
+let refreshSequence=0;
 function toast(message){
   const box=el('toast');
   box.textContent=message;box.classList.remove('hidden');
@@ -29,6 +32,7 @@ function tab(value){
     el('tab-'+item).setAttribute('aria-selected',String(selected));
     el('view-'+item).classList.toggle('hidden',!selected);
   }
+  if(current==='wallet')void refreshPortfolio();
 }
 document.querySelectorAll('.tab').forEach(b=>
   b.addEventListener('click',()=>tab(b.dataset.tab)));
@@ -37,27 +41,102 @@ for(const {id,label} of NETWORKS){
   if(!document.querySelector('#network option[value="'+id+'"]'))throw Error('network_missing_'+label);
 }
 function walletScreen(){
-  el('wallet-hero-address').textContent=wallet.evm?fmt(wallet.evm):'Не привязан в этом окне';
-  el('recipient').textContent=wallet.evm?fmt(wallet.evm):'Откройте личный кошелёк';
-  for(const kind of ['evm','ton','tron','near']){
-    el('wallet-'+kind).textContent=wallet[kind]||'Не подключён';
-    const copy=document.querySelector('[data-copy="'+kind+'"]');
-    copy.disabled=!wallet[kind];
-    copy.addEventListener('click',async()=>{
-      if(!wallet[kind])return;
-      try{
-        await navigator.clipboard.writeText(wallet[kind]);
-        toast('Публичный адрес скопирован. Не отправляйте на него деньги до разблокировки депозитов.');
-      }catch{toast('Буфер обмена недоступен: адрес можно выделить вручную.');}
-    });
-  }
-  if(wallet.evm){
-    el('wallet-link-status').querySelector('strong').textContent='Адреса из личного сообщения бота';
+  el('wallet-evm').textContent=wallet.evm||'Адрес не создан';
+  el('wallet-ton').textContent=wallet.ton||'Адрес не создан';
+  if(wallet.evm&&wallet.ton){
+    el('wallet-link-status').querySelector('strong').textContent='Личный кошелёк';
     el('wallet-link-status').querySelector('span').textContent=
-      'Публичные адреса получены из вашей кнопки «Мой кошелёк». Получение средств заблокировано до резервного копирования и проверки владения.';
+      'Публичные адреса получены через кнопку GiftMutantBot. Балансы проверяются в сетях отдельно.';
   }
 }
 walletScreen();
+const formatWalletAddress=address=>address?fmt(address):'Адрес не создан';
+const walletAddress=network=>wallet[NETWORKS_WALLET[network].addressType];
+const walletButtons=[...document.querySelectorAll('[data-wallet-network]')];
+function renderPortfolio(result){
+  const config=NETWORKS_WALLET[currentWalletNetwork],addr=walletAddress(currentWalletNetwork);
+  el('wallet-hero-address').textContent=formatWalletAddress(addr);
+  el('wallet-main-symbol').textContent=config.native;
+  el('wallet-copy').disabled=!addr;
+  el('wallet-receive').disabled=!addr;
+  el('wallet-history').disabled=!addr;
+  el('wallet-network-state').textContent=result?.state==='wallet_missing'
+    ?'Не подключён':result?.state==='unavailable'?'Источник недоступен':'Данные блокчейна';
+  const native=result?.assets?.[0];
+  el('wallet-main-balance').textContent=native?.state==='verified'?native.balance:'—';
+  el('wallet-updated').textContent=result?.observedAt
+    ?'Обновлено '+new Date(result.observedAt).toLocaleTimeString('ru-RU'):'Нет данных';
+  const assets=el('wallet-assets');assets.replaceChildren();
+  for(const asset of result?.assets||[]){
+    const row=document.createElement('div');row.className='wallet-asset';
+    const icon=document.createElement('div');icon.className='wallet-asset-icon';
+    icon.textContent=asset.symbol==='USDT'?'₮':asset.symbol==='BNB'?'◈':asset.symbol==='TON'?'◆':'M';
+    const meta=document.createElement('div');meta.className='wallet-asset-meta';
+    const name=document.createElement('strong');name.textContent=asset.symbol;
+    const chain=document.createElement('span');chain.textContent=config.name;
+    meta.append(name,chain);
+    const number=document.createElement('div');number.className='wallet-asset-balance';
+    number.textContent=asset.state==='verified'?asset.balance:'—';
+    row.append(icon,meta,number);assets.append(row);
+  }
+  if(!addr){
+    const row=document.createElement('p');row.className='helper';
+    row.textContent='Откройте /start в GiftMutantBot, затем кнопку «Мой кошелёк».';
+    assets.append(row);
+  }
+}
+async function refreshPortfolio(){
+  const seq=++refreshSequence,network=currentWalletNetwork;
+  const config=NETWORKS_WALLET[network];
+  el('wallet-network-state').textContent='Обновление...';
+  el('wallet-main-balance').textContent='—';
+  const result=await loadChainPortfolio(network,wallet).catch(()=>({
+    network,state:'unavailable',
+    assets:[{symbol:config.native,state:'unavailable'},{symbol:'USDT',state:'unavailable'}]
+  }));
+  if(seq!==refreshSequence||network!==currentWalletNetwork)return;
+  renderPortfolio(result);
+}
+walletButtons.forEach(button=>button.addEventListener('click',()=>{
+ currentWalletNetwork=button.dataset.walletNetwork;
+ walletButtons.forEach(item=>{
+  const selected=item===button;item.classList.toggle('active',selected);
+  item.setAttribute('aria-pressed',String(selected));
+ });
+ el('wallet-receive-panel').classList.add('hidden');
+ void refreshPortfolio();
+}));
+el('wallet-refresh').addEventListener('click',()=>void refreshPortfolio());
+async function copyCurrentAddress(){
+ const addr=walletAddress(currentWalletNetwork);
+ if(!addr)return;
+ try{await navigator.clipboard.writeText(addr);toast('Публичный адрес скопирован');}
+ catch{toast('Адрес доступен для ручного копирования');}
+}
+el('wallet-copy').addEventListener('click',()=>void copyCurrentAddress());
+el('wallet-receive').addEventListener('click',()=>{
+ const addr=walletAddress(currentWalletNetwork);
+ if(!addr)return;
+ el('wallet-receive-panel').classList.remove('hidden');
+ el('wallet-receive-address').textContent=addr;
+ el('wallet-receive-network').textContent=NETWORKS_WALLET[currentWalletNetwork].name;
+});
+el('wallet-receive-copy').addEventListener('click',()=>void copyCurrentAddress());
+el('wallet-history').addEventListener('click',()=>{
+ const addr=walletAddress(currentWalletNetwork);
+ if(!addr)return;
+ const url=explorerHistoryUrl(currentWalletNetwork,addr);
+ if(tg?.openLink)tg.openLink(url);
+ else window.open(url,'_blank','noopener,noreferrer');
+});
+el('wallet-swap').addEventListener('click',()=>{
+ if(currentWalletNetwork==='ton')el('network').value='ton';
+ else el('network').value='bsc';
+ if(wallet.evm)el('evm-recipient').value=wallet.evm;
+ tab('swap');refreshRoute();
+ if(currentWalletNetwork==='mtt')toast('Обмен внутри MTT Network пока не запущен. Показан маршрут BSC.');
+});
+
 el('evm-recipient').value=wallet.evm||'';
 async function loadTonGateway(){
   try{

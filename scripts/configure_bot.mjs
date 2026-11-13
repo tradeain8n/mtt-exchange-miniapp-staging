@@ -15,38 +15,34 @@ async function api(method,body){
 }
 const me=await api('getMe',{});
 if(String(me.username||'').toLowerCase()!==expectedUsername)throw Error('Secret does not belong to GiftMutantBot');
-await api('setChatMenuButton',{menu_button:{
-  type:'web_app',text:'Baby MTT · MTT SPORTS / Yaako',web_app:{url:appUrl}
-}});
-await api('setMyCommands',{commands:[
-    {command:'start',description:'MTT SPORTS / Yaako · тестовый вход'},
-  {command:'mttsports',description:'MTT SPORTS · регистрация по реферальной ссылке'},
-  {command:'mttsportscheck',description:'Проверить после входа в MTT SPORTS'},
-  {command:'refstatus',description:'Статус моего реферального приглашения'},
-  {command:'yaako',description:'Выбор кошелька и вход Yaako'},
-  {command:'wallet',description:'Мой тестовый профиль'},
-  {command:'linkstatus',description:'Статус подписи и привязки'},
-  {command:'approve',description:'Подтвердить адрес в Telegram'},
-  {command:'recipient',description:'Выбранный получатель MTT'},
-  {command:'help',description:'Помощь по тестовому контуру'}
-]});
+// A short command menu leads to the /start wallet instead of the obsolete
+// registration wizard. The Yaako Mini App remains available from /start.
+await api('setChatMenuButton',{menu_button:{type:'commands'}});
+const minimalCommands=[
+  {command:'start',description:'Главная · личный кошелёк'},
+  {command:'wallet',description:'Мой кошелёк · адреса сетей'},
+  {command:'mttsports',description:'Play Now · MTT SPORTS'},
+  {command:'yaako',description:'Yaako · войти и привязать'},
+  {command:'help',description:'Помощь'}
+];
+await api('setMyCommands',{commands:minimalCommands});
 await api('setMyShortDescription',{short_description:
-  'Baby MTT V2 · реферальный вход MTT SPORTS и EVM-кошелёк Yaako. Тест.'});
+  'Baby MTT · личный мультисетевой кошелёк, Play Now и Yaako. STAGING.'});
 await api('setMyDescription',{description:
-  'Baby MTT V2 · тестовая регистрация через MTT SPORTS, связка Yaako EVM, GitHub Actions и получатель MTT. Цель: 3,3 USDT TON → MTT; реальные переводы выключены.'});
+  'Baby MTT: постоянный кошелёк при Telegram /start, MTT SPORTS Play Now, Yaako. Переводы не включены до проверки резервной фразы и безопасности.'});
 const menu=await api('getChatMenuButton',{});
 const commands=await api('getMyCommands',{});
 const webhook=await api('getWebhookInfo',{});
-if(menu.type!=='web_app'||menu.web_app?.url!==appUrl){
+if(menu.type!=='commands'){
   throw Error('Telegram menu configuration could not be verified');
 }
-if(!['start','mttsports','mttsportscheck','refstatus','yaako','wallet','linkstatus','approve','recipient','help'].every(name=>commands.some(x=>x.command===name))){
+if(commands.length!==minimalCommands.length || !minimalCommands.every(x=>commands.some(c=>c.command===x.command))){
   throw Error('Telegram commands were not saved');
 }
 console.log('BOT_MENU_VERIFIED',JSON.stringify({
   bot_id:me.id,username:me.username,
   has_main_web_app:me.has_main_web_app===true,
-  menu_url:menu.web_app.url,
+  menu_type:menu.type,
   commands:commands.map(x=>x.command),
   webhook_configured:Boolean(webhook.url)
 }));

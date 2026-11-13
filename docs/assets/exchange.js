@@ -134,11 +134,10 @@ el('wallet-history').addEventListener('click',()=>{
  else window.open(url,'_blank','noopener,noreferrer');
 });
 el('wallet-swap').addEventListener('click',()=>{
- if(currentWalletNetwork==='ton')el('network').value='ton';
- else el('network').value='bsc';
+ el('network').value=currentWalletNetwork==='bsc'?'bsc':'ton';
  if(wallet.evm)el('evm-recipient').value=wallet.evm;
  tab('swap');refreshRoute();
- if(currentWalletNetwork==='mtt')toast('Обмен внутри MTT Network пока не запущен. Показан маршрут BSC.');
+ if(currentWalletNetwork==='mtt')toast('Получение MTT Network выбрано. Для оплаты используется USD₮ TON.');
 });
 
 el('evm-recipient').value=wallet.evm||'';
@@ -181,6 +180,7 @@ function openBot(){
 }
 el('open-wallet-bot').addEventListener('click',openBot);
 el('network').addEventListener('change',()=>{el('result').textContent='—';refreshRoute();});
+el('destination-network').addEventListener('change',()=>{el('result').textContent='—';refreshRoute();});
 el('input-asset').addEventListener('change',()=>{
   el('source-token-title').textContent=el('input-asset').value;
   el('result').textContent='—';
@@ -193,14 +193,18 @@ function refreshRoute(){
   const token=el('input-asset').value;
   const recipient=el('evm-recipient').value.trim();
   const route=evaluateRoute({network,token,amount:el('amount').value});
+  const destination=el('destination-network').value;
   const status=el('route-state');
   el('recipient').textContent=isEvmAddress(recipient)?fmt(recipient):'Укажите корректный EVM-адрес';
   el('ton-preflight').classList.toggle('hidden',network!=='ton');
-  if(!route.ok){
+  if(destination!=='mtt'){
+    status.querySelector('strong').textContent='Недоступная сеть получения';
+    status.querySelector('span').textContent='MTT можно получить только в MTT Network (6880).';
+  }else if(!route.ok){
     status.querySelector('strong').textContent='Маршрут недоступен';
     status.querySelector('span').textContent=route.reason+' Депозит запрещён.';
   }else if(network==='ton'){
-    status.querySelector('strong').textContent='TON USDT → BSC USDT → MTT · проверка';
+    status.querySelector('strong').textContent='USD₮ TON → MTT Network';
     status.querySelector('span').textContent=route.reason;
   }else{
     status.querySelector('strong').textContent='Пилот: USDT BSC → MTT Network';
@@ -209,11 +213,11 @@ function refreshRoute(){
   }
   el('quote').disabled=!route.ok||pending;
   el('quote').textContent=route.ok
-    ?(network==='ton'?'Проверить мост TON и лимиты':'Рассчитать ориентир для '+route.amount+' USDT')
+    ?(network==='ton'?'Рассчитать MTT за 3 USD₮':'Рассчитать ориентир для '+route.amount+' USDT')
     :'Выберите поддерживаемый маршрут';
   el('ton-draft').disabled=true;
-  el('ton-pilot-create').disabled=!(network==='ton'&&route.ok&&
-    route.amount==='3.00'&&gateway&&tg?.initData&&wallet?.ton&&wallet?.evm&&
+  el('ton-pilot-create').disabled=!(destination==='mtt'&&network==='ton'&&route.ok&&
+    Number(route.amount)===3&&gateway&&tg?.initData&&wallet?.ton&&wallet?.evm&&
     recipient.toLowerCase()===wallet.evm.toLowerCase()&&!pending);
   el('pay').disabled=true;
   return route;
@@ -256,7 +260,8 @@ async function updatePilotStatus(){
 el('ton-pilot-refresh').addEventListener('click',()=>void updatePilotStatus());
 el('ton-pilot-create').addEventListener('click',async()=>{
  const route=refreshRoute();
- if(pending||route.network!=='ton'||route.amount!=='3.00'||!wallet?.ton)return;
+ if(pending||route.network!=='ton'||Number(route.amount)!==3||
+    el('destination-network').value!=='mtt'||!wallet?.ton)return;
  pending=true;el('ton-pilot-create').disabled=true;
  try{
   const response=await pilotRequest({base:gateway,initData:tg.initData,

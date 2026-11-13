@@ -1,10 +1,9 @@
 // Standalone, publicly testable MVP routing policy. No signed orders here.
-export const DEFAULT_AMOUNT = '2.00';
-export const PILOT = Object.freeze({network:'bsc',token:'USDT',target:'MTT',targetChainId:6880});
+export const DEFAULT_AMOUNT = '3.00';
+export const PILOT = Object.freeze({network:'ton',token:'USDT',target:'MTT',targetChainId:6880});
 export const NETWORKS = Object.freeze([
   {id:'bsc',label:'BNB Smart Chain · BEP-20',usable:true},
-  {id:'ton',label:'TON · USDT Jetton (проверка)',usable:false},
-  {id:'mtt',label:'MTT Network · обмен позже',usable:false}
+  {id:'ton',label:'TON · USD₮ Jetton',usable:true}
 ]);
 export const TOKENS=Object.freeze(['USDT','USDC']);
 export const WALLET_CHAINS=Object.freeze(['evm','ton','tron','near']);
@@ -35,12 +34,13 @@ export function evaluateRoute({network,token,amount}){
   const amountNum=Number(a);
   if(!Number.isFinite(amountNum)||amountNum<=0)return {ok:false,reason:'Сумма должна быть положительной.'};
   if(network==='ton'&&token==='USDT'){
-    if(amountNum<3)return {ok:false,network:'ton',reason:'Для перехода TON USDT → BSC USDT у исследованного провайдера опубликован ориентир минимума 3 USDT. Точный лимит должен подтвердить живой API.'};
-    if(amountNum>20)return {ok:false,network:'ton',reason:'Для пилота доступен диапазон до 20 USDT.'};
-    return {ok:true,network:'ton',token:'USDT',amount:a,recipientNetwork:'MTT Network',
-      quoteSource:'provider_authorization_required',minReference:'3',
+    if(amountNum!==3)return {ok:false,network:'ton',reason:'Для первого реального теста доступен обмен ровно 3 USD₮ TON.'};
+    return {ok:true,network:'ton',token:'USDT',amount:a,
+      recipientNetwork:'MTT Network',destinationChainId:6880,
+      recipientPolicy:'same_evm_address',
+      quoteSource:'treasury_mtt_swap_quote',minReference:'3',
       liveQuote:false,canDeposit:false,canExecute:false,previewOnly:true,
-      reason:'TON USDT → USDT BSC → MTT Network. Нужно подтвердить живую котировку двух обменов, комиссию и EVM-получателя. Платёжный адрес не выдаётся.'};
+      reason:'Оплата 3 USD₮ в TON → покупка MTT из резерва 3 USDT в MTT Network → выплата на привязанный EVM. Заказ и оплата доступны только через подтверждённый сервер.'};
   }
   if(network!=='bsc'||token!=='USDT')return {
     ok:false,reason:'Для первого пилота подтверждён только маршрут USDT в BNB Smart Chain (BEP-20). Не переводите средства из другой сети.'

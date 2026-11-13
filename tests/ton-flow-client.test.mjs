@@ -11,8 +11,9 @@ test('TON USDT route is displayed but cannot accept or spend coins',()=>{
  assert.equal(isEvmAddress('0xBAD'),false);
  const tooSmall=evaluateRoute({network:'ton',token:'USDT',amount:'2'});
  assert.equal(tooSmall.ok,false);
- assert.match(tooSmall.reason,/3 USDT/);
- const draft=evaluateRoute({network:'ton',token:'USDT',amount:'3.5'});
+ assert.match(tooSmall.reason,/3 USD₮ TON/);
+ assert.equal(evaluateRoute({network:'ton',token:'USDT',amount:'3.5'}).ok,false);
+ const draft=evaluateRoute({network:'ton',token:'USDT',amount:'3'});
  assert.equal(draft.ok,true);
  assert.equal(draft.previewOnly,true);
  assert.equal(draft.canDeposit,false);

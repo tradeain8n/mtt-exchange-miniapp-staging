@@ -45,30 +45,34 @@
         </select>
         <p class="muted" id="asset-hint">USDT в TON — Jetton, не нативная монета TON. Не путайте эти активы.</p>
         <div class="input-divider"></div>
-        <label class="field-label" for="network">Сеть поступления</label>
+        <label class="field-label" for="network">Сеть оплаты USDT</label>
         <select id="network" aria-describedby="network-hint">
           <option value="bsc">BNB Smart Chain · BEP-20</option>
-          <option value="ton" selected>TON · USDT Jetton (проверка маршрута)</option>
-          <option value="mtt" disabled>MTT Network · обмен внутри сети — позже</option>
+          <option value="ton" selected>TON · USD₮ Jetton</option>
         </select>
-        <p class="muted" id="network-hint">Сначала клиент выбирает точную сеть, затем получает проверенные реквизиты. Сейчас оплата отключена.</p>
+        <p class="muted" id="network-hint">Для этой сделки выберите TON. Клиент оплачивает 3 USD₮ в сети TON; MTT поступают в сети MTT Network.</p>
       </div>
       <div class="swap-arrow" aria-hidden="true">↓</div>
       <div class="panel output-panel">
-        <div class="panel-heading"><h2>Получаете</h2><span>MTT Network · 6880</span></div>
+        <div class="panel-heading"><h2>Получаете</h2><span>MTT</span></div>
+        <label class="field-label" for="destination-network">Сеть получения MTT</label>
+        <select id="destination-network" aria-label="Сеть получения MTT">
+          <option value="mtt" selected>MTT Network · Chain ID 6880</option>
+        </select>
+        <p class="muted">Выбрана сеть MTT Network — именно сюда будут зачислены MTT.</p>
         <div class="amount-line output-line"><output id="result" aria-live="polite">—</output><div class="coin mtt-coin">✦ <strong>MTT</strong></div></div>
         <div class="input-divider"></div>
         <div class="destination"><span>Адрес получателя</span><strong id="recipient">Не выбран</strong></div>
         <label class="field-label" for="evm-recipient">Куда отправить MTT · EVM (MTT Network 6880)</label>
         <input class="evm-entry" id="evm-recipient" type="text" maxlength="42" spellcheck="false" autocapitalize="off" autocomplete="off" placeholder="0x… 40 символов" aria-describedby="evm-recipient-info">
         <p id="evm-recipient-info" class="muted">Введите личный EVM-адрес; если открыли через кнопку кошелька, он заполнится автоматически. Только публичный адрес.</p>
-        <p class="muted">MTT будет доставлен на указанный EVM-адрес в MTT Network после успешного обмена и подтверждения операций. В пилоте переводы отключены.</p>
+        <p class="muted">MTT будут отправлены на привязанный EVM-адрес после подтверждения оплаты USD₮ TON и исполнения обмена.</p>
       </div>
       <div class="notice notice-warning" id="route-state" role="status">
-        <strong>Режим предварительного расчёта</strong>
-        <span>Пополнение выключено: резервная фраза ещё не передана владельцу и не проверено восстановление.</span>
+        <strong>USD₮ TON → MTT Network</strong>
+        <span>Оплата проходит в сети TON. Получение MTT — в сети MTT Network (6880). Платёж подтверждается в TON-кошельке.</span>
       </div>
-      <button id="quote" type="button" class="action action-primary">Проверить маршрут на 3 USDT</button>
+      <button id="quote" type="button" class="action action-primary">Рассчитать MTT за 3 USD₮</button>
       <button id="pay" type="button" class="action action-locked" disabled aria-disabled="true">Оплата недоступна до проверки кошелька</button>
       <p id="quote-details" class="helper" aria-live="polite">Курс не зафиксирован. Комиссии сети, газа и моста в расчёт не включены.</p>
       <div id="ton-preflight" class="panel ton-preflight hidden">

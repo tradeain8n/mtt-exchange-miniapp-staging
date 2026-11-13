@@ -124,10 +124,11 @@
         <code id="wallet-receive-address"></code>
         <button id="wallet-receive-copy" class="action action-secondary" type="button">Копировать публичный адрес</button>
       </div>
-      <div class="notice notice-warning wallet-security-note">
+      <div id="wallet-backup-notice" class="notice notice-warning wallet-security-note">
         <strong>Переводы временно недоступны</strong>
         <span>Seed-фраза персонального кошелька ещё не экспортирована и не проверено восстановление. Без этого отправка и приём реальных средств небезопасны. Приватные ключи не отображаются здесь.</span>
       </div>
+      <a id="wallet-backup" class="action action-secondary" href="./backup.html">Сохранить и подтвердить 12 слов</a>
       <div class="panel wallet-addresses">
         <div class="panel-heading"><h2>Адреса моего кошелька</h2><span>Только публичные</span></div>
         <div class="wallet-row"><div class="wallet-icon">Ξ</div><div class="wallet-meta"><strong>EVM · BSC + MTT</strong><span>Один EVM-адрес в двух разных сетях</span><code id="wallet-evm">Не подключён</code></div></div>

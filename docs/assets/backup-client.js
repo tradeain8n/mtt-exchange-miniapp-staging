@@ -1,5 +1,5 @@
 // GiftMutant recovery pages: mnemonic only in transient DOM memory.
-// No sessionStorage/localStorage for secret words, no console logging.
+// Secret words remain transient in memory; never persisted or logged.
 const tg=window.Telegram?.WebApp;
 try{tg?.ready();tg?.expand();tg?.setHeaderColor?.('#101f4d');}catch{}
 const $=id=>document.getElementById(id);

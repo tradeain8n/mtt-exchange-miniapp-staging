@@ -1,3 +1,4 @@
+import {USDT_TON_MASTER} from './ton-flow-client.js';
 // Pilot checkout: Telegram-signed backend only. Never touches private keys.
 const endpoint=(base,path)=>base.replace(/\/$/,'')+'/api/giftmutant/pilot/'+path;
 export async function pilotRequest({base,initData,action,recipientEvm,fetcher=fetch}){
@@ -18,10 +19,17 @@ export function assertPilotOrder(order,clientEvm,clientTon){
  if(!order||order.amountUsdt!=='3'||order.recipientEvm?.toLowerCase()
    !==clientEvm?.toLowerCase()||order.sourceTon!==clientTon)
   throw Error('unrecognized_pilot_order');
- if(order.paymentUrl&&
-  (!order.paymentUrl.startsWith('ton://transfer/')||
-    !order.paymentUrl.includes('amount=3000000')||
-    !order.paymentUrl.includes('jetton=')))
-  throw Error('untrusted_ton_payment_link');
+ if(order.paymentUrl){
+  let invoice;
+  try{invoice=new URL(order.paymentUrl);}
+  catch{throw Error('untrusted_ton_payment_link');}
+  if(invoice.protocol!=='ton:'||invoice.hostname!=='transfer'||
+    decodeURIComponent(invoice.pathname.slice(1))!==order.centralTon||
+    invoice.searchParams.get('jetton')!==USDT_TON_MASTER||
+    invoice.searchParams.get('amount')!=='3000000'||
+    invoice.searchParams.get('text')!==order.memo||
+    !/^GFT-[a-f0-9]{16}$/.test(order.memo||''))
+    throw Error('untrusted_ton_payment_link');
+ }
  return order;
 }

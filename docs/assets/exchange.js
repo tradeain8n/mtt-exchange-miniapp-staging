@@ -1,4 +1,5 @@
 import {pilotRequest,assertPilotOrder} from './giftmutant-pilot.js';
+import {mttSendRequest,validMttSendInput} from './mtt-send-client.js';
 import {loadChainPortfolio,NETWORKS_WALLET,explorerHistoryUrl} from './wallet-portfolio.js';
 import {parseUsdt,formatWei,fetchLiveReserves,calculateQuote} from './quote.js';
 import {readWalletFragment} from './exchange-model.js';
@@ -14,6 +15,7 @@ const wallet={...context.wallet};
 const fmt=value=>value&&value.length>26?value.slice(0,9)+'…'+value.slice(-7):(value||'—');
 let gateway=null;
 let currentWalletNetwork='mtt';
+let nativeSendEnabled=false,nativeSendBusy=false,nativeSendIntent=null;
 let refreshSequence=0,toastTimer=null;
 let quoteReady=false,quoteLoading=false,placingOrder=false,currentOrder=null;
 let latestEstimate=null,lastQuoteAt=0;
@@ -55,6 +57,14 @@ walletScreen();
 const formatWalletAddress=address=>address?fmt(address):'Адрес не создан';
 const walletAddress=network=>wallet[NETWORKS_WALLET[network].addressType];
 const walletButtons=[...document.querySelectorAll('[data-wallet-network]')];
+function syncMttSendButton(){
+ const btn=el('wallet-send');
+ btn.disabled=!(currentWalletNetwork==='mtt'&&nativeSendEnabled&&
+  gateway&&tg?.initData&&wallet.evm);
+ btn.setAttribute('aria-disabled',String(btn.disabled));
+ btn.title=currentWalletNetwork!=='mtt'?'Сейчас доступна отправка MTT в MTT Network':
+  btn.disabled?'Подтвердите резервную фразу кошелька':'Отправить MTT';
+}
 function renderPortfolio(result){
   const config=NETWORKS_WALLET[currentWalletNetwork],addr=walletAddress(currentWalletNetwork);
   el('wallet-hero-address').textContent=formatWalletAddress(addr);
@@ -62,6 +72,7 @@ function renderPortfolio(result){
   el('wallet-copy').disabled=!addr;
   el('wallet-receive').disabled=!addr;
   el('wallet-history').disabled=!addr;
+  syncMttSendButton();
   el('wallet-network-state').textContent=result?.state==='wallet_missing'
     ?'Не подключён':result?.state==='unavailable'?'Источник недоступен':'Данные блокчейна';
   const native=result?.assets?.[0];
@@ -106,6 +117,8 @@ walletButtons.forEach(button=>button.addEventListener('click',()=>{
   item.setAttribute('aria-pressed',String(selected));
  });
  el('wallet-receive-panel').classList.add('hidden');
+ el('wallet-send-panel').classList.add('hidden');
+ syncMttSendButton();
  void refreshPortfolio();
 }));
 el('wallet-refresh').addEventListener('click',()=>void refreshPortfolio());
@@ -157,10 +170,140 @@ async function refreshBackupStatus(){
     'Вы успешно проверили сохранённые слова. Реальные депозиты и переводы ещё не включены.';
    el('wallet-backup').classList.add('hidden');
    panel.classList.add('hidden');
+   nativeSendEnabled=true;syncMttSendButton();
   }
  }catch{/* No false-positive backup confirmation on error. */}
 }
 
+
+
+const sendError=e=>{
+ const codes={
+  secure_mtt_session_required:'Откройте кошелёк из GiftMutantBot.',
+  telegram_session_expired:'Сессия Telegram устарела. Откройте бот заново.',
+  backup_confirmation_required:'Сначала сохраните и подтвердите 12 слов.',
+  invalid_mtt_send_input:'Проверьте адрес и сумму MTT.',
+  invalid_mtt_recipient:'Неверный адрес получателя.',
+  insufficient_mtt_for_gas:'Недостаточно MTT с учётом комиссии сети.',
+  send_already_pending:'Предыдущий перевод ещё не завершён.',
+  nonce_pending:'В сети уже ожидается другая транзакция. Дождитесь её.',
+  send_intent_expired:'Время подтверждения истекло. Проверьте перевод заново.',
+  send_intent_missing:'Заявка перевода не найдена.',
+  gas_fee_too_high:'Комиссия сети слишком высокая. Попробуйте позже.',
+  mtt_send_not_available:'Отправка MTT временно недоступна.'
+ };
+ return codes[e.message]||'Не удалось выполнить перевод: '+String(e.message||'ошибка').slice(0,90);
+};
+function sendText(message,failed=false){
+ const target=el('wallet-send-status');target.textContent=message;
+ target.classList.toggle('error',failed);
+}
+async function callMttSend(action,values={}){
+ return mttSendRequest({base:gateway,initData:tg?.initData,action,...values});
+}
+function showMttSendPreview(send){
+ nativeSendIntent=send;
+ el('wallet-send-target').textContent=send.to;
+ el('wallet-send-value').textContent=send.amountMtt+' MTT';
+ el('wallet-send-fee').textContent='до '+send.maxFeeMtt+' MTT';
+ el('wallet-send-preview').classList.remove('hidden');
+ el('wallet-send-prepare').classList.add('hidden');
+ el('wallet-send-check').classList.add('hidden');
+ el('wallet-send-confirm').disabled=false;
+ sendText('Проверьте адрес, сумму и комиссию перед подтверждением.');
+}
+function updateMttSendStatus(send){
+ nativeSendIntent=send;
+ const labels={
+  prepared:'Перевод ждёт подтверждения.',
+  signing:'Подписываем транзакцию…',
+  signed:'Транзакция подписана. Проверяем сеть…',
+  broadcast:'Транзакция отправлена. Ждём подтверждения…',
+  confirmed:'MTT успешно отправлены!',
+  reverted:'Сеть отклонила транзакцию.',
+  failed:'Не удалось подписать перевод.',
+  expired:'Время подтверждения истекло.',
+  interrupted:'Операция прервана до отправки. Можно создать новую.'
+ };
+ sendText(labels[send.state]||'Проверяем перевод…',
+  ['failed','reverted','expired','interrupted'].includes(send.state));
+ const final=['confirmed','reverted','failed','expired','interrupted'].includes(send.state);
+ el('wallet-send-preview').classList.add('hidden');
+ el('wallet-send-check').classList.toggle('hidden',final);
+ el('wallet-send-explorer').classList.toggle('hidden',!send.txHash);
+ el('wallet-send-prepare').classList.toggle('hidden',!final);
+ if(send.state==='confirmed')void refreshPortfolio();
+}
+async function checkMttSendStatus(){
+ if(nativeSendBusy)return;
+ nativeSendBusy=true;
+ try{
+  const data=await callMttSend('status',nativeSendIntent?
+   {intentId:nativeSendIntent.id}:{});
+  if(data.send){
+   if(data.send.state==='prepared')showMttSendPreview(data.send);
+   else updateMttSendStatus(data.send);
+  }
+ }catch(e){sendText(sendError(e),true);}
+ finally{nativeSendBusy=false;}
+}
+function invalidateMttSendPreview(){
+ nativeSendIntent=null;
+ el('wallet-send-preview').classList.add('hidden');
+ el('wallet-send-prepare').classList.remove('hidden');
+ el('wallet-send-check').classList.add('hidden');
+ el('wallet-send-explorer').classList.add('hidden');
+ sendText('');
+}
+el('wallet-send').addEventListener('click',()=>{
+ if(el('wallet-send').disabled)return;
+ el('wallet-send-panel').classList.remove('hidden');
+ el('wallet-receive-panel').classList.add('hidden');
+ el('wallet-send-panel').scrollIntoView?.({behavior:'smooth',block:'nearest'});
+ void checkMttSendStatus();
+});
+el('wallet-send-close').addEventListener('click',()=>{
+ el('wallet-send-panel').classList.add('hidden');
+});
+for(const name of ['wallet-send-amount','wallet-send-to'])
+ el(name).addEventListener('input',invalidateMttSendPreview);
+el('wallet-send-prepare').addEventListener('click',async()=>{
+ if(nativeSendBusy)return;
+ const recipient=el('wallet-send-to').value.trim();
+ const amount=el('wallet-send-amount').value.trim();
+ if(!validMttSendInput(recipient,amount)){
+  sendText('Укажите EVM-адрес и положительную сумму MTT.',true);return;
+ }
+ nativeSendBusy=true;el('wallet-send-prepare').disabled=true;
+ sendText('Проверяем баланс и комиссию сети…');
+ try{
+  const data=await callMttSend('prepare',{recipient,amountMtt:amount});
+  showMttSendPreview(data.send);
+ }catch(e){sendText(sendError(e),true);}
+ finally{nativeSendBusy=false;el('wallet-send-prepare').disabled=false;}
+});
+el('wallet-send-confirm').addEventListener('click',async()=>{
+ if(nativeSendBusy||!nativeSendIntent||nativeSendIntent.state!=='prepared')return;
+ nativeSendBusy=true;el('wallet-send-confirm').disabled=true;
+ sendText('Подписываем и отправляем MTT…');
+ try{
+  const data=await callMttSend('confirm',{
+   intentId:nativeSendIntent.id,confirm:'SEND_MTT_NOW'
+  });
+  updateMttSendStatus(data.send);
+ }catch(e){
+  sendText(sendError(e),true);
+  el('wallet-send-check').classList.remove('hidden');
+ }finally{nativeSendBusy=false;}
+});
+el('wallet-send-check').addEventListener('click',()=>void checkMttSendStatus());
+el('wallet-send-explorer').addEventListener('click',()=>{
+ const hash=nativeSendIntent?.txHash;
+ if(!/^0x[0-9a-fA-F]{64}$/.test(hash||''))return;
+ const url='https://explorer.mtt.network/tx/'+hash;
+ if(tg?.openLink)tg.openLink(url);
+ else window.open(url,'_blank','noopener,noreferrer');
+});
 
 function setFeedback(message,warning=false){
  const node=el('swap-message');node.textContent=message;

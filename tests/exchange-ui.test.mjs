@@ -21,6 +21,13 @@ test('interface has a wallet tab and safe, disabled payment control',()=>{
  assert.match(html,/id="tab-wallet"/);
  assert.match(html,/id="wallet-evm"/);
  assert.match(html,/id="network"/);
+ assert.match(html,/for="network">Сеть оплаты USDT/);
+ assert.match(html,/id="destination-network"/);
+ assert.match(html,/for="destination-network">Сеть получения MTT/);
+ assert.match(html,/<option value="mtt" selected>MTT Network/);
+ assert.doesNotMatch(html,/<option value="mtt" disabled>/);
+ assert.match(js,/destination==='mtt'/);
+ assert.match(js,/USD₮ TON → MTT Network/);
  assert.match(html,/value="3\.00"/);
  assert.match(html,/id="pay"[^>]*disabled/);
  assert.match(html,/assets\/exchange\.js/);

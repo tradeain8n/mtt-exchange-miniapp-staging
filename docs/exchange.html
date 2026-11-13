@@ -134,16 +134,6 @@
         <div class="wallet-row"><div class="wallet-icon">Ξ</div><div class="wallet-meta"><strong>EVM · BSC + MTT</strong><span>Один EVM-адрес в двух разных сетях</span><code id="wallet-evm">Не подключён</code></div></div>
         <div class="wallet-row"><div class="wallet-icon">◆</div><div class="wallet-meta"><strong>TON</strong><span>Отдельный TON Wallet V5R1</span><code id="wallet-ton">Не подключён</code></div></div>
       </div>
-      <div class="panel wallet-ton-compat" aria-label="Совместимость TON с HOT Wallet">
-        <div class="panel-heading"><h2>TON · HOT Wallet</h2><span>Совместимость</span></div>
-        <p class="muted">Если после восстановления 12 слов в HOT Wallet TON-адрес другой, скопируйте там только публичный TON-адрес. Seed-фраза здесь не нужна.</p>
-        <label class="field-label" for="wallet-hot-ton">TON-адрес из HOT Wallet</label>
-        <input id="wallet-hot-ton" class="evm-entry" type="text" autocomplete="off" spellcheck="false" autocapitalize="off" maxlength="100" placeholder="UQ… или EQ…">
-        <button id="wallet-hot-verify" class="action action-secondary" type="button">Сверить TON-адрес по моей seed-фразе</button>
-        <p id="wallet-hot-report" class="muted" role="status">Сравним версии TON V3, V4, V5 и известные пути derivation без вывода приватных данных.</p>
-        <button id="wallet-hot-apply" class="action action-primary" type="button" disabled>Использовать проверенный адрес TON</button>
-        <p id="wallet-hot-previous" class="muted hidden">Прежний адрес TON сохранён и доступен для проверки старых поступлений.</p>
-      </div>
       <div id="wallet-link-status" class="notice notice-info"><strong>Подключение</strong>
         <span>Для открытия своего кошелька используйте кнопку «Мой кошелёк» в GiftMutantBot.</span></div>
       <button id="open-wallet-bot" class="action action-secondary" type="button">Открыть GiftMutantBot</button>

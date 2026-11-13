@@ -8,7 +8,7 @@
 <meta name="description" content="Baby MTT Exchange — обмен USDT на MTT и личный мультисетевой кошелёк">
 <link rel="icon" href="./icon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="./assets/exchange.css">
-<title>Baby MTT Exchange · Обмен и кошелёк</title>
+<title>GiftMutant · Обмен и кошелёк</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script type="module" src="./assets/exchange.js"></script>
 </head>
@@ -48,11 +48,8 @@
         <label class="field-label" for="network">Сеть поступления</label>
         <select id="network" aria-describedby="network-hint">
           <option value="bsc">BNB Smart Chain · BEP-20</option>
-          <option value="polygon">Polygon · скоро</option>
-          <option value="ethereum">Ethereum · скоро</option>
           <option value="ton" selected>TON · USDT Jetton (проверка маршрута)</option>
-          <option value="tron">TRON · скоро</option>
-          <option value="near">NEAR · скоро</option>
+          <option value="mtt" disabled>MTT Network · обмен внутри сети — позже</option>
         </select>
         <p class="muted" id="network-hint">Сначала клиент выбирает точную сеть, затем получает проверенные реквизиты. Сейчас оплата отключена.</p>
       </div>
@@ -91,22 +88,54 @@
       </div>
     </section>
 
-    <section id="view-wallet" class="view hidden" aria-label="Личный мультисетевой кошелёк">
-      <div class="wallet-card">
-        <div class="wallet-card-top"><span>Baby MTT Wallet</span><span>HD · BIP39</span></div>
-        <div class="wallet-card-bottom"><div><small>Ваш EVM-кошелёк</small><strong id="wallet-hero-address">Не привязан в этом окне</strong></div><span aria-hidden="true">◈</span></div>
+    <section id="view-wallet" class="view hidden" aria-label="Личный кошелёк GiftMutant">
+      <div class="wallet-heading">
+        <div><h1>Мой кошелёк</h1><p>Ваши активы в MTT Network, BSC и TON</p></div>
+        <button id="wallet-refresh" type="button" aria-label="Обновить балансы" title="Обновить балансы">⟳</button>
       </div>
-      <div class="notice notice-warning"><strong>Безопасность кошелька</strong><span>Резервная фраза пока не выдана пользователю. Не отправляйте сюда деньги. Приватные ключи в Mini App не передаются.</span></div>
-      <div class="panel wallet-list">
-        <div class="panel-heading"><h2>Адреса по сетям</h2><span>Только просмотр</span></div>
-        <div class="wallet-row"><div class="wallet-icon">Ξ</div><div class="wallet-meta"><strong>EVM</strong><span>MTT · Ethereum · BSC · Polygon</span><code id="wallet-evm">Не подключён</code></div><button type="button" class="copy" data-copy="evm" disabled>Копировать</button></div>
-        <div class="wallet-row"><div class="wallet-icon">◆</div><div class="wallet-meta"><strong>TON</strong><span>Wallet V5R1</span><code id="wallet-ton">Не подключён</code></div><button type="button" class="copy" data-copy="ton" disabled>Копировать</button></div>
-        <div class="wallet-row"><div class="wallet-icon">T</div><div class="wallet-meta"><strong>TRON</strong><span>TRX · TRC-20</span><code id="wallet-tron">Не подключён</code></div><button type="button" class="copy" data-copy="tron" disabled>Копировать</button></div>
-        <div class="wallet-row"><div class="wallet-icon">N</div><div class="wallet-meta"><strong>NEAR</strong><span>Implicit account</span><code id="wallet-near">Не подключён</code></div><button type="button" class="copy" data-copy="near" disabled>Копировать</button></div>
+      <div class="wallet-card portfolio-card">
+        <div class="wallet-card-top"><span>GiftMutant Wallet</span><span id="wallet-network-state">Проверка сети</span></div>
+        <div class="wallet-network-selector" role="group" aria-label="Выбрать сеть">
+          <button type="button" data-wallet-network="mtt" class="active" aria-pressed="true">MTT Network</button>
+          <button type="button" data-wallet-network="bsc" aria-pressed="false">BNB Chain</button>
+          <button type="button" data-wallet-network="ton" aria-pressed="false">TON</button>
+        </div>
+        <div class="wallet-address-line"><code id="wallet-hero-address">Адрес не получен</code>
+          <button type="button" id="wallet-copy" aria-label="Копировать адрес" disabled>▣</button></div>
+        <div class="wallet-balance-hero"><strong id="wallet-main-balance">—</strong>
+          <span id="wallet-main-symbol">MTT</span></div>
+        <p class="wallet-balance-caption">Баланс из блокчейна · без приблизительной USD-оценки</p>
+        <div class="wallet-quick-actions">
+          <button id="wallet-receive" type="button" disabled><span>↓</span>Получить</button>
+          <button id="wallet-send" type="button" disabled aria-disabled="true"><span>↗</span>Отправить</button>
+          <button id="wallet-swap" type="button"><span>⇄</span>Обмен</button>
+          <button id="wallet-history" type="button" disabled><span>◴</span>История</button>
+        </div>
       </div>
-      <div id="wallet-link-status" class="notice notice-info"><strong>Подключение</strong><span>Откройте «Мой кошелёк» в сообщении GiftMutantBot, чтобы загрузить персональные адреса в это окно.</span></div>
-      <button id="open-wallet-bot" class="action action-secondary" type="button">Открыть личный кошелёк в Telegram</button>
-      <p class="helper">Вход через Telegram не даёт права автоматически выводить средства. Действия с ключами и переводами пока заблокированы.</p>
+      <div class="section-heading wallet-assets-heading">
+        <h2>Активы</h2><span id="wallet-updated">Не обновлено</span>
+      </div>
+      <div id="wallet-assets" class="wallet-asset-list" aria-live="polite">
+        <div class="wallet-asset"><strong>—</strong><span>Выберите сеть</span></div>
+      </div>
+      <div id="wallet-receive-panel" class="panel wallet-receive-panel hidden">
+        <div class="panel-heading"><h2>Получить активы</h2><span id="wallet-receive-network">MTT Network</span></div>
+        <p>Это ваш публичный адрес. Перед первым реальным пополнением необходимо сохранить и проверить резервную фразу кошелька.</p>
+        <code id="wallet-receive-address"></code>
+        <button id="wallet-receive-copy" class="action action-secondary" type="button">Копировать публичный адрес</button>
+      </div>
+      <div class="notice notice-warning wallet-security-note">
+        <strong>Переводы временно недоступны</strong>
+        <span>Seed-фраза персонального кошелька ещё не экспортирована и не проверено восстановление. Без этого отправка и приём реальных средств небезопасны. Приватные ключи не отображаются здесь.</span>
+      </div>
+      <div class="panel wallet-addresses">
+        <div class="panel-heading"><h2>Адреса моего кошелька</h2><span>Только публичные</span></div>
+        <div class="wallet-row"><div class="wallet-icon">Ξ</div><div class="wallet-meta"><strong>EVM · BSC + MTT</strong><span>Один EVM-адрес в двух разных сетях</span><code id="wallet-evm">Не подключён</code></div></div>
+        <div class="wallet-row"><div class="wallet-icon">◆</div><div class="wallet-meta"><strong>TON</strong><span>Отдельный TON Wallet V5R1</span><code id="wallet-ton">Не подключён</code></div></div>
+      </div>
+      <div id="wallet-link-status" class="notice notice-info"><strong>Подключение</strong>
+        <span>Для открытия своего кошелька используйте кнопку «Мой кошелёк» в GiftMutantBot.</span></div>
+      <button id="open-wallet-bot" class="action action-secondary" type="button">Открыть GiftMutantBot</button>
     </section>
 
     <section class="footer-panel">

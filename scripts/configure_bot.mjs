@@ -1,5 +1,5 @@
 const token=process.env.TELEGRAM_BOT_TOKEN;
-const appUrl=process.env.MINIAPP_URL||'https://tradeain8n.github.io/mtt-exchange-miniapp-staging/exchange.html';
+const appUrl=process.env.MINIAPP_URL||'https://tradeain8n.github.io/mtt-exchange-miniapp-staging/exchange.html?v=5';
 const expectedUsername='giftmutantbot';
 if(!token)throw Error('TELEGRAM_BOT_TOKEN GitHub Secret is missing');
 if(!appUrl.startsWith('https://'))throw Error('Telegram Mini App requires HTTPS');
@@ -28,9 +28,9 @@ const minimalCommands=[
 ];
 await api('setMyCommands',{commands:minimalCommands});
 await api('setMyShortDescription',{short_description:
-  'Baby MTT · личный мультисетевой кошелёк, Play Now и Yaako. STAGING.'});
+  'GiftMutant · обмен USD₮ на MTT, личный кошелёк и история операций.'});
 await api('setMyDescription',{description:
-  'Baby MTT: постоянный кошелёк при Telegram /start, MTT SPORTS Play Now, Yaako. Переводы не включены до проверки резервной фразы и безопасности.'});
+  'GiftMutant: постоянный кошелёк, покупка MTT за USD₮ TON, отслеживание обмена и безопасная проверка резервной фразы.'});
 const menu=await api('getChatMenuButton',{});
 const commands=await api('getMyCommands',{});
 const webhook=await api('getWebhookInfo',{});

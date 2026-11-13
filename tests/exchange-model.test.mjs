@@ -16,11 +16,15 @@ test('minimal $2 USDT BSC route is only a non-executable preview',()=>{
  assert.equal(NETWORKS.filter(x=>x.usable).length,1);
 });
 test('all other networks and tokens fail closed to prevent wrong-chain deposits',()=>{
- for(const network of ['polygon','ethereum','ton','tron','near']){
+ for(const network of ['polygon','ethereum','tron','near']){
    const r=evaluateRoute({network,token:'USDT',amount:'2'});
    assert.equal(r.ok,false,network);
    assert.match(r.reason,/BEP-20/);
  }
+ const tonTooSmall=evaluateRoute({network:'ton',token:'USDT',amount:'2'});
+ assert.equal(tonTooSmall.ok,false);
+ assert.match(tonTooSmall.reason,/3 USDT/);
+ assert.equal(evaluateRoute({network:'ton',token:'USDT',amount:'3.5'}).previewOnly,true);
  assert.equal(evaluateRoute({network:'bsc',token:'USDC',amount:'2'}).ok,false);
  assert.equal(evaluateRoute({network:'bsc',token:'USDT',amount:'0.5'}).ok,false);
  assert.equal(evaluateRoute({network:'bsc',token:'USDT',amount:'21'}).ok,false);

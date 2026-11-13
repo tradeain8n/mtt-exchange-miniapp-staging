@@ -35,15 +35,22 @@
         <div class="amount-line">
           <label for="amount" class="sr-only">Количество токенов</label>
           <input id="amount" type="text" inputmode="decimal" value="2.00" maxlength="12" autocomplete="off" aria-describedby="route-state">
-          <div class="coin">₮ <strong>USDT</strong></div>
+          <div class="coin">₮ <strong id="source-token-title">USDT</strong></div>
         </div>
+        <div class="input-divider"></div>
+        <label class="field-label" for="input-asset">Чем оплачиваете</label>
+        <select id="input-asset">
+          <option value="USDT">USDT · токен (в TON — официальный Jetton)</option>
+          <option value="TON">TON · монета (маршрут ещё не подтверждён)</option>
+        </select>
+        <p class="muted" id="asset-hint">USDT в TON — Jetton, не нативная монета TON. Не путайте эти активы.</p>
         <div class="input-divider"></div>
         <label class="field-label" for="network">Сеть поступления</label>
         <select id="network" aria-describedby="network-hint">
           <option value="bsc">BNB Smart Chain · BEP-20</option>
           <option value="polygon">Polygon · скоро</option>
           <option value="ethereum">Ethereum · скоро</option>
-          <option value="ton">TON · скоро</option>
+          <option value="ton" selected>TON · USDT Jetton (проверка маршрута)</option>
           <option value="tron">TRON · скоро</option>
           <option value="near">NEAR · скоро</option>
         </select>
@@ -55,7 +62,10 @@
         <div class="amount-line output-line"><output id="result" aria-live="polite">—</output><div class="coin mtt-coin">✦ <strong>MTT</strong></div></div>
         <div class="input-divider"></div>
         <div class="destination"><span>Адрес получателя</span><strong id="recipient">Не выбран</strong></div>
-        <p class="muted">MTT поступит на тот же EVM-адрес, который закреплён за вашим Baby MTT Wallet. Для других сетей адреса различаются.</p>
+        <label class="field-label" for="evm-recipient">Куда отправить MTT · EVM (MTT Network 6880)</label>
+        <input class="evm-entry" id="evm-recipient" type="text" maxlength="42" spellcheck="false" autocapitalize="off" autocomplete="off" placeholder="0x… 40 символов" aria-describedby="evm-recipient-info">
+        <p id="evm-recipient-info" class="muted">Введите личный EVM-адрес; если открыли через кнопку кошелька, он заполнится автоматически. Только публичный адрес.</p>
+        <p class="muted">MTT будет доставлен на указанный EVM-адрес в MTT Network после успешного обмена и подтверждения операций. В пилоте переводы отключены.</p>
       </div>
       <div class="notice notice-warning" id="route-state" role="status">
         <strong>Режим предварительного расчёта</strong>
@@ -64,9 +74,18 @@
       <button id="quote" type="button" class="action action-primary">Проверить маршрут на 2 USDT</button>
       <button id="pay" type="button" class="action action-locked" disabled aria-disabled="true">Оплата недоступна до проверки кошелька</button>
       <p id="quote-details" class="helper" aria-live="polite">Курс не зафиксирован. Комиссии сети, газа и моста в расчёт не включены.</p>
+      <div id="ton-preflight" class="panel ton-preflight hidden">
+        <div class="panel-heading"><h2>Заявка TON → MTT</h2><span>Только подготовка</span></div>
+        <p class="muted">Маршрут: USDT Jetton в TON → USDT в BSC → MTT в сети 6880. Платёжный адрес появится только после реального подтверждения лимитов, двух котировок, сетевых комиссий и механизма исполнения.</p>
+        <div class="staging-step"><span>1</span><div><strong>Проверка TON-перевода</strong><p>USDT Jetton сверяется с официальным master-контрактом; не принимаем поддельный USDT.</p></div></div>
+        <div class="staging-step"><span>2</span><div><strong>Мост в BSC</strong><p>SideShift — исследуемый провайдер. Публичный ориентир минимума от 3 USDT; живой лимит пока не получен.</p></div></div>
+        <div class="staging-step"><span>3</span><div><strong>MTT Swap → ваш EVM</strong><p>Сумма MTT рассчитывается только по исполнимым двум котировкам; никакой обещанной фиксированной выплаты пока нет.</p></div></div>
+        <p id="ton-order-status" class="muted" role="status">Заказ не создан. Нельзя отправлять реальные активы.</p>
+        <button id="ton-draft" type="button" class="action action-secondary" disabled>Сохранить тестовую заявку</button>
+      </div>
       <div class="section-heading"><h2>Как работает покупка</h2><span>Пилот</span></div>
       <div class="steps">
-        <div class="step"><span>01</span><div><strong>USDT в BSC</strong><p>Выбранная клиентом сеть и токен должны совпадать с заказом.</p></div></div>
+        <div class="step"><span>01</span><div><strong>USDT в выбранной сети</strong><p>Выбранная клиентом сеть и токен должны совпадать с заказом.</p></div></div>
         <div class="step"><span>02</span><div><strong>MTT Swap / проверенный маршрут</strong><p>Котировка и комиссии подтверждаются перед исполнением, после чего проводится перевод.</p></div></div>
         <div class="step"><span>03</span><div><strong>MTT Network → ваш EVM</strong><p>Результат сверяется по транзакции и отображается в истории операций.</p></div></div>
       </div>

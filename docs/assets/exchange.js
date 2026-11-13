@@ -1,5 +1,7 @@
 import {parseUsdt,formatWei,fetchLiveReserves,calculateQuote} from './quote.js';
 import {NETWORKS,DEFAULT_AMOUNT,evaluateRoute,readWalletFragment} from './exchange-model.js';
+import {normalizeAppApi,isEvmAddress,fetchTonPreview,createTonDraft}
+ from './ton-flow-client.js';
 
 const tg=window.Telegram?.WebApp;
 try{
@@ -11,6 +13,7 @@ const context=readWalletFragment(window.location.hash);
 const wallet=context.wallet;
 const fmt=x=>x.length>26?x.slice(0,10)+'…'+x.slice(-8):x;
 let pending=false;
+let gateway=null;
 let toastTimer=null;
 function toast(message){
   const box=el('toast');
@@ -55,6 +58,16 @@ function walletScreen(){
   }
 }
 walletScreen();
+el('evm-recipient').value=wallet.evm||'';
+async function loadTonGateway(){
+  try{
+    const response=await fetch('./config.json',{cache:'no-store'});
+    if(response.ok)gateway=normalizeAppApi(await response.json());
+  }catch{}
+  refreshRoute();
+}
+void loadTonGateway();
+
 function openBot(){
   const url='https://t.me/GiftMutantBot?start=wallet';
   if(tg?.openTelegramLink)tg.openTelegramLink(url);
@@ -62,24 +75,50 @@ function openBot(){
 }
 el('open-wallet-bot').addEventListener('click',openBot);
 el('network').addEventListener('change',()=>{el('result').textContent='—';refreshRoute();});
+el('input-asset').addEventListener('change',()=>{
+  el('source-token-title').textContent=el('input-asset').value;
+  el('result').textContent='—';
+  refreshRoute();
+});
+el('evm-recipient').addEventListener('input',refreshRoute);
 el('amount').addEventListener('input',()=>{el('result').textContent='—';refreshRoute();});
 function refreshRoute(){
-  const route=evaluateRoute({network:el('network').value,token:'USDT',amount:el('amount').value});
+  const network=el('network').value;
+  const token=el('input-asset').value;
+  const recipient=el('evm-recipient').value.trim();
+  const route=evaluateRoute({network,token,amount:el('amount').value});
   const status=el('route-state');
+  el('recipient').textContent=isEvmAddress(recipient)?fmt(recipient):'Укажите корректный EVM-адрес';
+  el('ton-preflight').classList.toggle('hidden',network!=='ton');
   if(!route.ok){
     status.querySelector('strong').textContent='Маршрут недоступен';
     status.querySelector('span').textContent=route.reason+' Депозит запрещён.';
+  }else if(network==='ton'){
+    status.querySelector('strong').textContent='TON USDT → BSC USDT → MTT · проверка';
+    status.querySelector('span').textContent=route.reason;
   }else{
     status.querySelector('strong').textContent='Пилот: USDT BSC → MTT Network';
     status.querySelector('span').textContent=route.reason+
       ' Сначала требуется безопасная выдача seed-фразы и подтверждение затрат на газ.';
   }
   el('quote').disabled=!route.ok||pending;
-  el('quote').textContent=route.ok?'Рассчитать ориентир для '+route.amount+' USDT':'Выберите поддерживаемую сеть';
+  el('quote').textContent=route.ok
+    ?(network==='ton'?'Проверить мост TON и лимиты':'Рассчитать ориентир для '+route.amount+' USDT')
+    :'Выберите поддерживаемый маршрут';
+  el('ton-draft').disabled=!(network==='ton'&&route.ok&&gateway&&tg?.initData&&isEvmAddress(recipient)&&!pending);
   el('pay').disabled=true;
   return route;
 }
 refreshRoute();
+el('ton-draft').addEventListener('click',async()=>{
+  const route=refreshRoute();
+  if(!route.ok||route.network!=='ton'||!gateway||!tg?.initData)return;
+  const r=await createTonDraft({baseUrl:gateway,amount:route.amount,
+    recipient:el('evm-recipient').value.trim(),initData:tg.initData});
+  el('ton-order-status').textContent=r.ok
+    ?'Тестовая заявка '+r.draft.id+' сохранена. Статус: '+r.draft.status+'. Платёжный адрес НЕ выдаётся.'
+    :'Заявка не сохранена: необходим рабочий авторизованный шлюз. Деньги НЕ отправлять.';
+});
 async function quote(){
   const route=refreshRoute();
   if(!route.ok||pending)return;
@@ -89,6 +128,21 @@ async function quote(){
   const started=el('amount').value;
   const network=el('network').value;
   try{
+    if(route.network==='ton'){
+      const preview=await fetchTonPreview({baseUrl:gateway,
+        amount:route.amount,recipient:el('evm-recipient').value.trim()});
+      if(preview?.ok&&preview.bridge?.ok){
+        const b=preview.bridge;
+        el('ton-order-status').textContent='SideShift: мин. '+b.depositMin+
+          ' USDT; макс. '+b.depositMax+' USDT. Лимит '+(b.minMet?'выполнен':'НЕ выполнен')+
+          '. Исполнимой двухэтапной котировки и платёжного адреса пока нет.';
+      }else{
+        el('ton-order-status').textContent='Шлюз проверки TON недоступен или партнёрская авторизация отсутствует. Заказ и адрес для перевода не создаются.';
+      }
+      el('result').textContent='—';
+      el('quote-details').textContent='Прогноз количества MTT нельзя считать без живой цены TON→BSC, комиссии моста и котировки MTT Swap. Не переводите USDT/TON.';
+      return;
+    }
     // This reads current on-chain MTT/USDT liquidity only. It is NOT a
     // signed or executable MTT Swap quote, nor a promise of net output.
     const reserves=await fetchLiveReserves();

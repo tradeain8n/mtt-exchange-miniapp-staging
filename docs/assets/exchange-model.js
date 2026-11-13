@@ -5,7 +5,7 @@ export const NETWORKS = Object.freeze([
   {id:'bsc',label:'BNB Smart Chain · BEP-20',usable:true},
   {id:'polygon',label:'Polygon',usable:false},
   {id:'ethereum',label:'Ethereum',usable:false},
-  {id:'ton',label:'TON',usable:false},
+  {id:'ton',label:'TON · USDT Jetton (проверка)',usable:false},
   {id:'tron',label:'TRON',usable:false},
   {id:'near',label:'NEAR',usable:false}
 ]);
@@ -37,6 +37,14 @@ export function evaluateRoute({network,token,amount}){
   if(!/^(?:0|[1-9]\d*)(?:\.\d{1,6})?$/.test(a))return {ok:false,reason:'Укажите сумму цифрами.'};
   const amountNum=Number(a);
   if(!Number.isFinite(amountNum)||amountNum<=0)return {ok:false,reason:'Сумма должна быть положительной.'};
+  if(network==='ton'&&token==='USDT'){
+    if(amountNum<3)return {ok:false,network:'ton',reason:'Для перехода TON USDT → BSC USDT у исследованного провайдера опубликован ориентир минимума 3 USDT. Точный лимит должен подтвердить живой API.'};
+    if(amountNum>20)return {ok:false,network:'ton',reason:'Для пилота доступен диапазон до 20 USDT.'};
+    return {ok:true,network:'ton',token:'USDT',amount:a,recipientNetwork:'MTT Network',
+      quoteSource:'provider_authorization_required',minReference:'3',
+      liveQuote:false,canDeposit:false,canExecute:false,previewOnly:true,
+      reason:'TON USDT → USDT BSC → MTT Network. Нужно подтвердить живую котировку двух обменов, комиссию и EVM-получателя. Платёжный адрес не выдаётся.'};
+  }
   if(network!=='bsc'||token!=='USDT')return {
     ok:false,reason:'Для первого пилота подтверждён только маршрут USDT в BNB Smart Chain (BEP-20). Не переводите средства из другой сети.'
   };

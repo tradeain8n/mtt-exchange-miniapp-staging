@@ -220,3 +220,5 @@ body{background:radial-gradient(ellipse 80% 260px at 50% -90px,#153b7b66,transpa
  .swap-big-amount{min-height:91px}
  .swap-network-row label,.swap-wallet-row label{font-size:11px}
 }
+
+.swap-minimum-mtt{font-size:13px;line-height:1.45;font-weight:750;color:#a9d7fa;margin:-8px 0 18px}

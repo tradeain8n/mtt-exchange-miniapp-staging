@@ -251,6 +251,10 @@ function renderOrder(order){
  currentOrder=data;
  const payStage=data.state==='awaiting_ton'&&Boolean(data.paymentUrl)&&
    Math.floor(Date.now()/1000)<data.expiresAt;
+ el('swap-minimum-mtt').textContent=
+  data.minimumClientMttWei&&/^\d+$/.test(data.minimumClientMttWei)
+   ?'Минимум к получению: '+formatWei(BigInt(data.minimumClientMttWei),2)+' MTT'
+   :'Минимальная сумма уточняется';
  el('swap-ton-recipient').textContent=data.centralTon;
  el('swap-payment-memo').textContent=data.memo;
  el('swap-evm-target').textContent=fmt(data.recipientEvm);

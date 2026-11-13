@@ -1,0 +1,30 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+const read=path=>readFileSync(new URL(path,import.meta.url),'utf8');
+test('wallet opens an explicit two-page seed confirmation with three prompted words',()=>{
+ const wallet=read('../docs/exchange.html');
+ const reveal=read('../docs/backup.html');
+ const verify=read('../docs/backup-confirm.html');
+ const client=read('../docs/assets/backup-client.js');
+ assert.match(wallet,/href="\.\/backup\.html"/);
+ assert.match(reveal,/data-backup-page="reveal"/);
+ assert.match(reveal,/recovery-words/);
+ assert.match(reveal,/recovery-copy/);
+ assert.match(reveal,/recovery-next/);
+ assert.match(verify,/data-backup-page="verify"/);
+ assert.match(verify,/recovery-inputs/);
+ assert.match(client,/challenge\.positions\.forEach/);
+ assert.match(client,/window\.location\.assign\('\.\/backup-confirm\.html'\)/);
+ assert.match(client,/Telegram\?\.WebApp/);
+});
+test('secret never enters URL, storage, logs or CI, and HTTPS is required',()=>{
+ const client=read('../docs/assets/backup-client.js');
+ const config=read('../docs/config.json');
+ assert.match(client,/protocol!=='https:'/);
+ assert.match(client,/window\.addEventListener\('pagehide',clearSecrets\)/);
+ assert.match(client,/credentials:'omit'/);
+ assert.doesNotMatch(client,/console\.|localStorage|sessionStorage\.setItem\(.*words|\.searchParams\.set\(.*words/);
+ assert.match(client,/sessionStorage\.setItem\(SESSION_KEY,JSON\.stringify/);
+ assert.match(config,/"apiBaseUrl":null/);
+});

@@ -32,7 +32,11 @@ function tab(value){
     el('tab-'+item).setAttribute('aria-selected',String(selected));
     el('view-'+item).classList.toggle('hidden',!selected);
   }
-  if(current==='wallet'){void refreshPortfolio();void refreshBackupStatus();}
+  if(current==='wallet'){
+   void refreshPortfolio();
+   void refreshBackupStatus();
+   void refreshTonCompatibilityStatus();
+  }
 }
 document.querySelectorAll('.tab').forEach(b=>
   b.addEventListener('click',()=>tab(b.dataset.tab)));

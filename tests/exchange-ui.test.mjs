@@ -21,7 +21,7 @@ test('interface has a wallet tab and safe, disabled payment control',()=>{
  assert.match(html,/id="tab-wallet"/);
  assert.match(html,/id="wallet-evm"/);
  assert.match(html,/id="network"/);
- assert.match(html,/value="2\.00"/);
+ assert.match(html,/value="3\.00"/);
  assert.match(html,/id="pay"[^>]*disabled/);
  assert.match(html,/assets\/exchange\.js/);
  assert.match(js,/el\('pay'\)\.disabled=true/);

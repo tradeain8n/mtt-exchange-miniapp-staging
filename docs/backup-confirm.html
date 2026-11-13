@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<meta name="referrer" content="no-referrer"><meta name="theme-color" content="#101f4d">
+<title>GiftMutant · Подтверждение резервной фразы</title>
+<link rel="stylesheet" href="./assets/exchange.css">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script type="module" src="./assets/backup-client.js"></script>
+</head>
+<body data-backup-page="verify">
+<main class="shell recovery-screen">
+ <div class="masthead"><div class="brandmark">M</div><div class="brandtitle"><strong>GiftMutant</strong><span>ПОДТВЕРЖДЕНИЕ КОШЕЛЬКА</span></div></div>
+ <div class="recovery-title"><span>Шаг 2 из 2</span><h1>Проверьте сохранённые слова</h1>
+ <p>Введите три слова из сохранённой фразы. Порядок и номера слов имеют значение. Саму фразу мы здесь не показываем.</p></div>
+ <form id="recovery-form" autocomplete="off">
+  <div id="recovery-inputs" class="recovery-inputs"></div>
+  <button type="submit" id="recovery-submit" class="action action-primary" disabled>Подтвердить кошелёк</button>
+ </form>
+ <div id="recovery-state" class="notice notice-info" role="status"><span>Проверяем данные...</span></div>
+ <a class="recovery-back" href="./backup.html">‹ Вернуться и посмотреть фразу заново</a>
+ <p class="helper">После проверки в базе сохраняется только дата подтверждения. Ни введённые слова, ни резервная фраза не записываются в историю и логи приложения.</p>
+</main>
+</body>
+</html>

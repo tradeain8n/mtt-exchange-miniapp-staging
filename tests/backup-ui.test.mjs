@@ -26,5 +26,8 @@ test('secret never enters URL, storage, logs or CI, and HTTPS is required',()=>{
  assert.match(client,/credentials:'omit'/);
  assert.doesNotMatch(client,/console\.|localStorage|sessionStorage\.setItem\(.*words|\.searchParams\.set\(.*words/);
  assert.match(client,/sessionStorage\.setItem\(SESSION_KEY,JSON\.stringify/);
- assert.match(config,/"apiBaseUrl":null/);
+ const published=JSON.parse(config);
+ assert.match(published.apiBaseUrl,/^https:\/\//);
+ assert.notEqual(new URL(published.apiBaseUrl).hostname,'tradeain8n.github.io');
+ assert.equal(published.exchangeState,'staging_backup_only');
 });

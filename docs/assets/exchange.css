@@ -282,3 +282,10 @@ body{background:radial-gradient(ellipse 80% 260px at 50% -90px,#153b7b66,transpa
 .wallet-history-amount span{font-size:11px;color:#a4bde1}
 .wallet-history-empty{color:#aabbd6;font-size:13px;line-height:1.5}
 @media(max-width:380px){.wallet-small-button{padding:0 8px;font-size:12px}.wallet-contact-editor{flex-wrap:wrap}}
+
+
+/* Compact real-time treasury limits. These are customer-facing MTT counts only. */
+.swap-liquidity{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;margin:15px 0 7px}
+.swap-liquidity>div{border-top:1px solid #314462;padding:11px 2px 7px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.swap-liquidity span{color:#98b1d4;font-weight:650;font-size:11px}
+.swap-liquidity strong{font-size:clamp(16px,4.3vw,21px);line-height:1.24;letter-spacing:-.02em;color:#e8f2ff;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}

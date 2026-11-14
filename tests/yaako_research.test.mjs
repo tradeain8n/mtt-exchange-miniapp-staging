@@ -28,6 +28,8 @@ test('Wallet proof UI never sends a transaction or asks for a password',()=>{
 test('MTT-013: Yaako link explains three independent identities before wallet approval',()=>{
  const html=readFileSync(new URL('../docs/yaako-link.html',import.meta.url),'utf8');
  assert.match(html,/id="wallet-trust-state"/);
+ assert.match(html,/неофициальный тестовый интерфейс/);
+ assert.match(html,/не является страницей входа Yaako или MTT SPORTS/);
  assert.match(html,/Telegram ID/);
  assert.match(html,/Yaako EVM/);
  assert.match(html,/MTT SPORTS/);

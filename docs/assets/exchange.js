@@ -19,6 +19,7 @@ let nativeSendEnabled=false,nativeSendBusy=false,nativeSendIntent=null;
 let refreshSequence=0,toastTimer=null;
 let quoteReady=false,quoteLoading=false,placingOrder=false,currentOrder=null;
 let latestEstimate=null,lastQuoteAt=0;
+let liveGiftmutantReadiness=null;
 const nameForState={
  awaiting_ton:'Ожидаем оплату',ton_confirmed:'Оплата получена',
  approval_pending:'Подготавливаем обмен',approved:'Обмениваем USDT',
@@ -334,11 +335,44 @@ function showStage(stage){
   el(item).classList.toggle('hidden',item!==stage);
  }
 }
+const readinessMessage={
+ treasury_liquidity_replenishment:'Пополняем ликвидность MTT. Оплата временно недоступна.',
+ treasury_gas_insufficient:'Обмен временно недоступен: пополняется сетевой резерв.',
+ settlement_worker_offline:'Обмен временно недоступен. Сервис восстанавливается.',
+ treasury_signer_not_armed:'Обмен временно недоступен. Сервис восстанавливается.',
+ central_wallet_not_configured:'Обмен временно недоступен.',
+ mtt_rpc_unavailable:'Не удаётся проверить баланс. Повторяем подключение.',
+ manual_review_required:'Обмен временно приостановлен для проверки.'
+};
+async function refreshLiveReadiness(){
+ if(!gateway)return;
+ try{
+  const resp=await fetch(gateway+'/api/giftmutant/readiness',{
+   method:'GET',cache:'no-store',credentials:'omit',
+   signal:AbortSignal.timeout(10000)
+  });
+  const data=await resp.json();
+  if(!resp.ok||data.route!=='TON_USDT_TO_MTT')
+   throw Error('invalid_giftmutant_readiness');
+  liveGiftmutantReadiness=data;
+  if(!currentOrder){
+   if(!data.accepting)setFeedback(
+    readinessMessage[data.reason]||'Обмен временно недоступен.',true);
+   else if(quoteReady)setFeedback('Готово к обмену · 3 USD₮ TON → MTT Network');
+  }
+ }catch{
+  liveGiftmutantReadiness={accepting:false,reason:'connection_unavailable'};
+  if(!currentOrder)setFeedback('Нет связи с обменником. Проверяем подключение…',true);
+ }
+ setAction();
+}
 function setAction(){
  const button=el('swap-main');
  if(placingOrder){button.disabled=true;button.textContent='Создаём заявку…';return;}
- button.disabled=quoteLoading||!gateway||!tg?.initData||!wallet.evm||!wallet.ton;
- button.textContent=quoteReady?'Продолжить':'Обновить курс';
+ button.disabled=quoteLoading||!gateway||!tg?.initData||!wallet.evm||!wallet.ton||
+  liveGiftmutantReadiness?.accepting!==true;
+ button.textContent=liveGiftmutantReadiness?.accepting===false
+  ?'Обмен временно недоступен':quoteReady?'Продолжить':'Обновить курс';
 }
 async function refreshQuote(){
  if(quoteLoading||currentOrder)return;
@@ -350,9 +384,10 @@ async function refreshQuote(){
   latestEstimate=estimate;lastQuoteAt=Date.now();quoteReady=true;
   el('result').textContent='≈ '+formatWei(estimate.amountOut,0);
   el('quote-note').textContent='Курс предварительный';
-  setFeedback(wallet.evm&&wallet.ton
-   ?'MTT поступят на ваш привязанный кошелёк'
-   :'Подключаем личный кошелёк…');
+  if(liveGiftmutantReadiness?.accepting!==false)
+   setFeedback(wallet.evm&&wallet.ton
+    ?'MTT поступят на ваш привязанный кошелёк'
+    :'Подключаем личный кошелёк…');
  }catch{
   quoteReady=false;latestEstimate=null;
   el('result').textContent='—';
@@ -435,7 +470,7 @@ async function loadPilotStatus(){
  return null;
 }
 async function createOrder(){
- if(placingOrder||!quoteReady||!gateway)return;
+ if(placingOrder||!quoteReady||!gateway||liveGiftmutantReadiness?.accepting!==true)return;
  placingOrder=true;setAction();
  try{
   await getAuthenticatedWallet(); // never trust a fragment-only address
@@ -481,7 +516,7 @@ async function bootSwap(){
   await getAuthenticatedWallet();
   void refreshBackupStatus();
   const existing=await loadPilotStatus();
-  if(!existing)await refreshQuote();
+  if(!existing){await refreshLiveReadiness();await refreshQuote();}
  }catch(error){
   setFeedback(String(error.message||'Сервис временно недоступен'),true);
   quoteReady=false;setAction();
@@ -521,4 +556,5 @@ updateRecipient();
 void bootSwap();
 window.setInterval(()=>{
  if(currentOrder&&currentOrder.state!=='completed')void loadPilotStatus();
+ else if(!currentOrder)void refreshLiveReadiness();
 },15000);

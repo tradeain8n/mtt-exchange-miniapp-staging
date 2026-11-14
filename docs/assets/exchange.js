@@ -22,6 +22,39 @@ let quoteReady=false,quoteLoading=false,placingOrder=false,currentOrder=null;
 let latestEstimate=null,lastQuoteAt=0;
 let internalTonPayment=null,internalTonBusy=false;
 let liveGiftmutantReadiness=null;
+let liquidityReading=false;
+function displayMttAmount(value){
+ if(typeof value!=='string'||!/^\d+(?:\.\d+)?$/.test(value))return '—';
+ const amount=Number(value);
+ return Number.isFinite(amount)
+  ?amount.toLocaleString('ru-RU',{maximumFractionDigits:2})+' MTT':'—';
+}
+async function refreshGiftmutantLiquidity(){
+ if(liquidityReading||!gateway)return;
+ liquidityReading=true;
+ try{
+  const response=await fetch(gateway+'/api/giftmutant/liquidity',{
+   method:'GET',cache:'no-store',credentials:'omit',
+   signal:AbortSignal.timeout(16000)
+  });
+  if(!response.ok)throw Error('liquidity_unavailable');
+  const snapshot=await response.json();
+  if(!snapshot.ok||snapshot.chainId!==6880||snapshot.network!=='MTT Network')
+   throw Error('invalid_liquidity_network');
+  el('liquidity-mtt-buy').textContent=displayMttAmount(snapshot.buy?.availableMtt);
+  el('liquidity-mtt-sell').textContent=displayMttAmount(snapshot.sell?.availableMtt);
+  el('liquidity-mtt-buy').title=snapshot.buy?.orderSupported
+   ?'Средства подтверждены в MTT Network'
+   :'Резерв MTT; новые заявки требуют доступного маршрута оплаты';
+  el('liquidity-mtt-sell').title=snapshot.sell?.orderSupported
+   ?'Обмен MTT доступен'
+   :'Продажа ожидает подключение подтверждённой выплаты USDT';
+ }catch{
+  el('liquidity-mtt-buy').textContent='—';
+  el('liquidity-mtt-sell').textContent='—';
+ }finally{liquidityReading=false;}
+}
+
 const nameForState={
  awaiting_ton:'Ожидаем оплату',ton_confirmed:'Оплата получена',
  approval_pending:'Подготавливаем обмен',approved:'Обмениваем USDT',
@@ -710,6 +743,7 @@ async function bootSwap(){
   if(!gateway)throw Error('Сервис временно недоступен');
   await getAuthenticatedWallet();
   void refreshBackupStatus();
+  void refreshGiftmutantLiquidity();
   const existing=await loadPilotStatus();
   if(!existing){await refreshLiveReadiness();await refreshQuote();}
  }catch(error){
@@ -762,3 +796,4 @@ window.setInterval(()=>{
  }
  else if(!currentOrder)void refreshLiveReadiness();
 },15000);
+window.setInterval(()=>void refreshGiftmutantLiquidity(),20000);

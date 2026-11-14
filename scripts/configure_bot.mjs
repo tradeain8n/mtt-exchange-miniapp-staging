@@ -1,5 +1,5 @@
 const token=process.env.TELEGRAM_BOT_TOKEN;
-const appUrl=process.env.MINIAPP_URL||'https://tradeain8n.github.io/mtt-exchange-miniapp-staging/exchange.html?v=9';
+const appUrl=process.env.MINIAPP_URL||'https://tradeain8n.github.io/mtt-exchange-miniapp-staging/exchange.html?v=10';
 const expectedUsername='giftmutantbot';
 if(!token)throw Error('TELEGRAM_BOT_TOKEN GitHub Secret is missing');
 if(!appUrl.startsWith('https://'))throw Error('Telegram Mini App requires HTTPS');

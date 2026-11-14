@@ -42,3 +42,33 @@ test('client requires signed telegram session, sane address/amount and exact con
  assert.equal(calls[1].params.confirm,'SEND_MTT_NOW');
  assert.equal(calls.length,2);
 });
+
+test('MAX, contacts and internal history are visible and use authenticated endpoints',async()=>{
+ const html=readFileSync(new URL('../docs/exchange.html',import.meta.url),'utf8');
+ const js=readFileSync(new URL('../docs/assets/exchange.js',import.meta.url),'utf8');
+ for(const id of ['wallet-send-max','wallet-contacts-open','wallet-contacts-panel',
+  'wallet-contact-save','wallet-contact-name','wallet-contacts-list',
+  'wallet-history-panel','wallet-history-list','wallet-history-refresh',
+  'wallet-history-close','wallet-send-reopen'])
+  assert.match(html,new RegExp('id="'+id+'"'));
+ assert.match(js,/callMttSend\('max'/);
+ assert.match(js,/callMttSend\('contacts\/save'/);
+ assert.match(js,/callMttSend\('history'/);
+ assert.doesNotMatch(js,/explorerHistoryUrl\(currentWalletNetwork/);
+ const calls=[];
+ const fetcher=async(url,options)=>{
+  calls.push({url,params:JSON.parse(options.body)});
+  return {ok:true,json:async()=>({ok:true,transactions:[],contacts:[],amountMtt:'5.0'})};
+ };
+ for(const [action,extra] of [
+  ['max',{recipient:to}],['contacts/list',{}],
+  ['contacts/save',{recipient:to,name:'Alice'}],
+  ['contacts/delete',{recipient:to}],['history',{}]
+ ]){
+  await mttSendRequest({base:'https://giftmutant.example',initData:'signed',
+   action,...extra,fetcher});
+ }
+ assert.deepEqual(calls.map(x=>x.url.split('/').slice(-2).join('/')),
+  ['mtt-send/max','contacts/list','contacts/save','contacts/delete','mtt-send/history']);
+ assert.ok(calls.every(x=>x.params.initData==='signed'));
+});

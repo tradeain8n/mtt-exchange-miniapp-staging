@@ -256,3 +256,29 @@ body{background:radial-gradient(ellipse 80% 260px at 50% -90px,#153b7b66,transpa
 .swap-internal-review>div strong{font-size:12px;color:#ecf6ff;text-align:right;overflow-wrap:anywhere}
 .swap-internal-review .action{margin-top:13px}
 .swap-internal-review .action-secondary{min-height:43px}
+
+/* Compact, touch-friendly wallet controls and first-party history. */
+.wallet-inline-field{display:flex;align-items:stretch;gap:8px}
+.wallet-inline-field .evm-entry{flex:1;min-width:0}
+.wallet-small-button{border:1px solid #4a75b5;border-radius:12px;background:#233e68;color:#dbeaff;font-size:13px;font-weight:700;padding:0 12px;min-height:49px;white-space:nowrap}
+.wallet-max-button{color:#fff;background:#3269dc;min-width:65px}
+.wallet-contacts-panel{margin-top:10px;border-radius:14px;border:1px solid #304a70;background:#111f37;padding:10px}
+.wallet-contacts-list{display:flex;flex-direction:column;gap:6px;max-height:205px;overflow-y:auto}
+.wallet-contact-row{display:flex;align-items:center;gap:7px;padding:6px 0;border-bottom:1px solid #2b3d58}
+.wallet-contact-pick{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;align-items:flex-start;text-align:left;padding:8px;border:0;border-radius:9px;background:transparent;color:#f3f7ff}
+.wallet-contact-pick span{font-size:11px;color:#91a8c8;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.wallet-contact-remove{background:transparent;border:1px solid #456080;color:#ffbcbb;border-radius:9px;min-height:40px;min-width:38px}
+.wallet-contact-editor{display:flex;gap:7px;margin-top:9px}
+.wallet-contact-editor input{background:#10203a;color:#fff;min-width:0;flex:1;border:1px solid #3b5883;border-radius:10px;padding:10px}
+.wallet-contact-editor .wallet-small-button{min-height:44px}
+.wallet-history-panel{margin:16px 0;padding:18px}
+.wallet-history-panel .panel-heading h2{font-size:21px}
+.wallet-history-list{display:flex;flex-direction:column;gap:9px;margin:14px 0}
+.wallet-history-row{background:#132641;border:1px solid #304c72;border-radius:14px;padding:12px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.wallet-history-row strong{font-size:15px;color:#fff;display:block}
+.wallet-history-row small{font-size:11px;color:#9eb4d4;display:block;margin-top:4px;overflow-wrap:anywhere}
+.wallet-history-amount{text-align:right;min-width:105px}
+.wallet-history-amount strong{font-size:14px}
+.wallet-history-amount span{font-size:11px;color:#a4bde1}
+.wallet-history-empty{color:#aabbd6;font-size:13px;line-height:1.5}
+@media(max-width:380px){.wallet-small-button{padding:0 8px;font-size:12px}.wallet-contact-editor{flex-wrap:wrap}}

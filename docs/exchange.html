@@ -7,10 +7,10 @@
 <meta name="robots" content="noindex,nofollow">
 <meta name="description" content="GiftMutant — обмен USDT на MTT и личный кошелёк BSC TON MTT">
 <link rel="icon" href="./icon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="./assets/exchange.css?v=9">
+<link rel="stylesheet" href="./assets/exchange.css?v=10">
 <title>GiftMutant · Обмен и кошелёк</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-<script type="module" src="./assets/exchange.js?v=9"></script>
+<script type="module" src="./assets/exchange.js?v=10"></script>
 </head>
 <body>
 <div class="shell">
@@ -150,9 +150,22 @@
         </div>
         <p class="muted">MTT Network · Chain ID 6880</p>
         <label class="field-label" for="wallet-send-to">Адрес получателя</label>
-        <input id="wallet-send-to" class="evm-entry" type="text" maxlength="42" spellcheck="false" autocapitalize="off" autocomplete="off" placeholder="0x…" aria-label="EVM адрес получателя MTT">
+        <div class="wallet-inline-field">
+          <input id="wallet-send-to" class="evm-entry" type="text" maxlength="42" spellcheck="false" autocapitalize="off" autocomplete="off" placeholder="0x…" aria-label="EVM адрес получателя MTT">
+          <button id="wallet-contacts-open" type="button" class="wallet-small-button">Контакты</button>
+        </div>
+        <div id="wallet-contacts-panel" class="wallet-contacts-panel hidden">
+          <div id="wallet-contacts-list" class="wallet-contacts-list" aria-live="polite"></div>
+          <div class="wallet-contact-editor">
+            <input id="wallet-contact-name" type="text" maxlength="32" placeholder="Название контакта" aria-label="Имя контакта">
+            <button id="wallet-contact-save" type="button" class="wallet-small-button">Сохранить адрес</button>
+          </div>
+        </div>
         <label class="field-label wallet-send-amount-label" for="wallet-send-amount">Сумма MTT</label>
-        <input id="wallet-send-amount" class="evm-entry" type="text" inputmode="decimal" placeholder="Например, 1000" maxlength="28" autocomplete="off" aria-label="Количество MTT для отправки">
+        <div class="wallet-inline-field">
+          <input id="wallet-send-amount" class="evm-entry" type="text" inputmode="decimal" placeholder="Например, 1000" maxlength="28" autocomplete="off" aria-label="Количество MTT для отправки">
+          <button id="wallet-send-max" type="button" class="wallet-small-button wallet-max-button">MAX</button>
+        </div>
         <div id="wallet-send-preview" class="wallet-send-preview hidden">
           <div><span>Получатель</span><code id="wallet-send-target"></code></div>
           <div><span>К отправке</span><strong id="wallet-send-value"></strong></div>
@@ -160,9 +173,19 @@
           <button id="wallet-send-confirm" class="action action-primary" type="button">Подтвердить отправку</button>
         </div>
         <p id="wallet-send-status" class="wallet-send-status" role="status" aria-live="polite"></p>
+        <button id="wallet-send-reopen" type="button" class="action action-secondary hidden">Открыть бот заново</button>
         <button id="wallet-send-prepare" class="action action-primary" type="button">Проверить перевод</button>
         <button id="wallet-send-check" class="action action-secondary hidden" type="button">Проверить статус</button>
         <button id="wallet-send-explorer" class="action action-secondary hidden" type="button">Посмотреть транзакцию</button>
+      </div>
+      <div id="wallet-history-panel" class="panel wallet-history-panel hidden">
+        <div class="panel-heading">
+          <h2>История переводов</h2>
+          <button id="wallet-history-close" type="button" class="wallet-send-close" aria-label="Закрыть историю">✕</button>
+        </div>
+        <p id="wallet-history-note" class="muted">MTT Network</p>
+        <div id="wallet-history-list" class="wallet-history-list" aria-live="polite"></div>
+        <button id="wallet-history-refresh" class="action action-secondary" type="button">Обновить историю</button>
       </div>
       <div id="wallet-receive-panel" class="panel wallet-receive-panel hidden">
         <div class="panel-heading"><h2>Получить активы</h2><span id="wallet-receive-network">MTT Network</span></div>

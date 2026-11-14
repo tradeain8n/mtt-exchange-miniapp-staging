@@ -1,7 +1,7 @@
 import {pilotRequest,assertPilotOrder} from './giftmutant-pilot.js';
 import {internalTonPaymentRequest} from './giftmutant-tonpay-client.js';
 import {mttSendRequest,validMttSendInput} from './mtt-send-client.js';
-import {loadChainPortfolio,NETWORKS_WALLET,explorerHistoryUrl} from './wallet-portfolio.js';
+import {loadChainPortfolio,NETWORKS_WALLET} from './wallet-portfolio.js';
 import {parseUsdt,formatWei,fetchLiveReserves,calculateQuote} from './quote.js';
 import {readWalletFragment} from './exchange-model.js';
 
@@ -121,6 +121,8 @@ walletButtons.forEach(button=>button.addEventListener('click',()=>{
  });
  el('wallet-receive-panel').classList.add('hidden');
  el('wallet-send-panel').classList.add('hidden');
+ el('wallet-history-panel').classList.add('hidden');
+ el('wallet-contacts-panel').classList.add('hidden');
  syncMttSendButton();
  void refreshPortfolio();
 }));
@@ -140,11 +142,132 @@ el('wallet-receive').addEventListener('click',()=>{
  el('wallet-receive-network').textContent=NETWORKS_WALLET[currentWalletNetwork].name;
 });
 el('wallet-receive-copy').addEventListener('click',()=>void copyCurrentAddress());
-el('wallet-history').addEventListener('click',()=>{
- const addr=walletAddress(currentWalletNetwork);
- if(!addr)return;
- const url=explorerHistoryUrl(currentWalletNetwork,addr);
- if(tg?.openLink)tg.openLink(url);
+// Personal contacts and first-party transaction timeline (no explorer redirect).
+const briefAddress=value=>value?value.slice(0,9)+'…'+value.slice(-6):'—';
+function renderContacts(items){
+ const list=el('wallet-contacts-list');list.replaceChildren();
+ if(!items.length){
+  const info=document.createElement('p');info.className='wallet-history-empty';
+  info.textContent='Пока нет сохранённых адресов.';list.append(info);return;
+ }
+ for(const item of items){
+  const row=document.createElement('div');row.className='wallet-contact-row';
+  const pick=document.createElement('button');pick.type='button';pick.className='wallet-contact-pick';
+  const name=document.createElement('strong');name.textContent=item.name;
+  const address=document.createElement('span');address.textContent=briefAddress(item.address);
+  pick.append(name,address);pick.addEventListener('click',()=>{
+   el('wallet-send-to').value=item.address;
+   invalidateMttSendPreview();el('wallet-contacts-panel').classList.add('hidden');
+   toast('Адрес выбран');
+  });
+  const remove=document.createElement('button');remove.type='button';
+  remove.className='wallet-contact-remove';remove.textContent='✕';
+  remove.setAttribute('aria-label','Удалить '+item.name);
+  remove.addEventListener('click',async()=>{
+   remove.disabled=true;
+   try{const data=await callMttSend('contacts/delete',{recipient:item.address});
+    renderContacts(data.contacts);toast('Контакт удалён');}
+   catch(error){sendText(sendError(error),true);}
+   finally{remove.disabled=false;}
+  });
+  row.append(pick,remove);list.append(row);
+ }
+}
+async function loadContacts(){
+ const data=await callMttSend('contacts/list');
+ renderContacts(data.contacts||[]);
+}
+el('wallet-contacts-open').addEventListener('click',async()=>{
+ const panel=el('wallet-contacts-panel');
+ panel.classList.toggle('hidden');
+ if(!panel.classList.contains('hidden')){
+  try{await loadContacts();}catch(error){sendText(sendError(error),true);}
+ }
+});
+el('wallet-contact-save').addEventListener('click',async()=>{
+ const name=el('wallet-contact-name').value.trim(),recipient=el('wallet-send-to').value.trim();
+ if(!name||!validMttSendInput(recipient,'1')){
+  sendText('Введите название и полный EVM-адрес.',true);return;
+ }
+ const btn=el('wallet-contact-save');btn.disabled=true;
+ try{
+  const data=await callMttSend('contacts/save',{name,recipient});
+  renderContacts(data.contacts);el('wallet-contact-name').value='';
+  toast('Контакт сохранён');sendText('');
+ }catch(error){sendText(sendError(error),true);}
+ finally{btn.disabled=false;}
+});
+el('wallet-send-max').addEventListener('click',async()=>{
+ const recipient=el('wallet-send-to').value.trim();
+ if(!validMttSendInput(recipient,'1')){
+  sendText('Сначала укажите адрес получателя для расчёта комиссии.',true);return;
+ }
+ const btn=el('wallet-send-max');btn.disabled=true;
+ sendText('Рассчитываем доступную сумму с учётом комиссии…');
+ try{
+  const data=await callMttSend('max',{recipient});
+  el('wallet-send-amount').value=data.amountMtt;
+  invalidateMttSendPreview();
+  sendText('MAX рассчитан. На комиссию зарезервировано до '+data.maxFeeMtt+' MTT.');
+ }catch(error){sendText(sendError(error),true);}
+ finally{btn.disabled=false;}
+});
+function historyRow(tx){
+ const row=document.createElement('div');row.className='wallet-history-row';
+ const left=document.createElement('div');left.style.minWidth='0';
+ const title=document.createElement('strong');
+ const states={confirmed:'Подтверждено',broadcast:'Отправлено',signed:'Подписано',
+  prepared:'Ожидает подтверждения',signing:'Подпись',failed:'Ошибка',
+  reverted:'Отклонено',expired:'Истекло',superseded:'Заменено',
+  interrupted:'Прервано',pending:'В обработке'};
+ title.textContent=tx.direction==='in'?'↓ Получено':'↗ Отправлено';
+ const details=document.createElement('small');
+ const time=tx.at?new Date(tx.at).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',
+  hour:'2-digit',minute:'2-digit'}):'';
+ details.textContent=time+' · '+briefAddress(tx.direction==='in'?tx.from:tx.to);
+ const status=document.createElement('small');
+ status.textContent=(states[tx.state]||tx.state)+(tx.hash?' · '+briefAddress(tx.hash):'');
+ left.append(title,details,status);
+ const right=document.createElement('div');right.className='wallet-history-amount';
+ const value=document.createElement('strong');
+ value.textContent=(tx.direction==='in'?'+':'−')+tx.amountMtt;
+ const unit=document.createElement('span');unit.textContent='MTT';
+ right.append(value,unit);row.append(left,right);
+ return row;
+}
+async function openWalletHistory(){
+ el('wallet-history-panel').classList.remove('hidden');
+ el('wallet-send-panel').classList.add('hidden');
+ el('wallet-receive-panel').classList.add('hidden');
+ const note=el('wallet-history-note'),list=el('wallet-history-list');
+ list.replaceChildren();note.textContent='Загружаем операции…';
+ if(currentWalletNetwork!=='mtt'){
+  note.textContent=NETWORKS_WALLET[currentWalletNetwork].name;
+  const text=document.createElement('p');text.className='wallet-history-empty';
+  text.textContent='Встроенная история сейчас доступна для MTT Network. Переключите сеть на MTT.';
+  list.append(text);return;
+ }
+ try{
+  const data=await callMttSend('history');
+  note.textContent=data.partial?
+   'MTT Network · история сети временно недоступна, показаны сохранённые операции':
+   'MTT Network · входящие и исходящие MTT';
+  if(!data.transactions?.length){
+   const text=document.createElement('p');text.className='wallet-history-empty';
+   text.textContent='Переводов пока нет.';list.append(text);
+  }else for(const tx of data.transactions)list.append(historyRow(tx));
+ }catch(error){
+  note.textContent=sendError(error);
+ }
+}
+el('wallet-history').addEventListener('click',()=>void openWalletHistory());
+el('wallet-history-refresh').addEventListener('click',()=>void openWalletHistory());
+el('wallet-history-close').addEventListener('click',()=>{
+ el('wallet-history-panel').classList.add('hidden');
+});
+el('wallet-send-reopen').addEventListener('click',()=>{
+ const url='https://t.me/GiftMutantBot?start=wallet';
+ if(tg?.openTelegramLink)tg.openTelegramLink(url);
  else window.open(url,'_blank','noopener,noreferrer');
 });
 el('wallet-swap').addEventListener('click',()=>{
@@ -193,13 +316,19 @@ const sendError=e=>{
   send_intent_expired:'Время подтверждения истекло. Проверьте перевод заново.',
   send_intent_missing:'Заявка перевода не найдена.',
   gas_fee_too_high:'Комиссия сети слишком высокая. Попробуйте позже.',
-  mtt_send_not_available:'Отправка MTT временно недоступна.'
+  mtt_send_not_available:'Отправка MTT временно недоступна.',
+  invalid_contact_name:'Введите название контакта длиной до 32 символов.',
+  contact_book_full:'В адресной книге уже 30 адресов.',
+  recipient_is_self:'Нельзя отправлять MTT на собственный адрес.',
+  direct_treasury_transfer_requires_order:'На центральный кошелёк отправляйте через заявку обмена.'
  };
  return codes[e.message]||'Не удалось выполнить перевод: '+String(e.message||'ошибка').slice(0,90);
 };
 function sendText(message,failed=false){
  const target=el('wallet-send-status');target.textContent=message;
  target.classList.toggle('error',failed);
+ el('wallet-send-reopen').classList.toggle('hidden',
+  !String(message).includes('Сессия Telegram устарела'));
 }
 async function callMttSend(action,values={}){
  return mttSendRequest({base:gateway,initData:tg?.initData,action,...values});
@@ -262,6 +391,7 @@ el('wallet-send').addEventListener('click',()=>{
  if(el('wallet-send').disabled)return;
  el('wallet-send-panel').classList.remove('hidden');
  el('wallet-receive-panel').classList.add('hidden');
+ el('wallet-history-panel').classList.add('hidden');
  el('wallet-send-panel').scrollIntoView?.({behavior:'smooth',block:'nearest'});
  void checkMttSendStatus();
 });

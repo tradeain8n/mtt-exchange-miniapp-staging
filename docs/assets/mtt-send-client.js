@@ -6,11 +6,12 @@ export function validMttSendInput(recipient,amount){
   Number(String(amount).replace(',','.'))>0;
 }
 export async function mttSendRequest({
- base,initData,action,recipient,amountMtt,intentId,confirm,fetcher=fetch
+ base,initData,action,recipient,amountMtt,intentId,confirm,name,fetcher=fetch
 }={}){
  if(typeof base!=='string'||!/^https:\/\//.test(base)||
   typeof initData!=='string'||!initData||
-  !['prepare','confirm','status'].includes(action))
+  !['prepare','confirm','status','max','history',
+   'contacts/list','contacts/save','contacts/delete'].includes(action))
   throw Error('secure_mtt_session_required');
  const params={initData};
  if(action==='prepare'){
@@ -21,6 +22,10 @@ export async function mttSendRequest({
   if(typeof intentId!=='string'||confirm!=='SEND_MTT_NOW')
    throw Error('confirmation_required');
   params.intentId=intentId;params.confirm=confirm;
+ }else if(action==='max'||action==='contacts/save'||action==='contacts/delete'){
+  if(!/^0x[0-9a-fA-F]{40}$/.test(recipient||''))throw Error('invalid_mtt_recipient');
+  params.recipient=recipient;
+  if(action==='contacts/save')params.name=name;
  }else if(intentId)params.intentId=intentId;
  const response=await fetcher(base.replace(/\/$/,'')+'/api/wallet/mtt-send/'+action,{
   method:'POST',headers:{'content-type':'application/json'},cache:'no-store',

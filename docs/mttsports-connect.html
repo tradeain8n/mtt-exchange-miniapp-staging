@@ -45,10 +45,20 @@
   <a class="btn outline" href="https://t.me/MTTSPORTS_bot/MTTSPORTS?startapp=eyJwYXRoIjoiLyIsInBhcmFtcyI6eyJpIjoiYmE0MzRiNWEifX0" rel="noreferrer">📱 Вход через Telegram</a>
  </section>
  <section>
+  <h2>👛 Адрес получателя MTT · Telegram</h2>
+  <p class="muted">Для аккаунта, зарегистрированного через Telegram: войди в официальный MTT SPORTS через Play Now, найди игровой EVM-адрес в разделе кошелька и скопируй его сюда. Это сохранит адрес для обмена, но не выдаст его за автоматически подтверждённый MTT SPORTS.</p>
+  <form id="recipientForm">
+   <label for="recipientAddress" class="muted">Публичный EVM-адрес в MTT Network (6880)</label>
+   <input id="recipientAddress" name="address" required maxlength="42" minlength="42" autocomplete="off" spellcheck="false" placeholder="0x..." style="display:block;width:100%;margin:10px 0;padding:12px;border-radius:10px;background:#0d1728;border:1px solid #526784;color:white;font:14px monospace" />
+   <label class="muted"><input id="recipientConfirm" type="checkbox" required /> Я сверил адрес в своём MTT SPORTS и понимаю, что пока это выбранный мной адрес, а не подтверждённая MTT SPORTS привязка.</label>
+   <button class="btn primary" id="saveRecipient" type="submit">Сохранить адрес получателя</button>
+  </form>
+  <p class="muted" id="recipientStatus" aria-live="polite">Адрес получателя пока не указан.</p>
+ </section>
+ <section>
   <h2>🔗 Привязка через наш Email CLI</h2>
   <p class="muted">Для проверки существующего аккаунта отправь в чате GiftMutant команду <strong>/mttlink</strong>. Затем на TV Box запусти <code>mttsports-safe auth email</code>.</p>
   <p class="muted">Если CLI уже показал EVM-адрес и ожидает код привязки, повторно запрашивать письмо не нужно: получи свежий /mttlink и введи его в терминале. Иначе код из письма вводится только в локальном CLI; срок привязки — 10 минут.</p>
-  <p class="muted">📬 Для уведомления о новом письме используй /mttmail в GiftMutant. Этот режим читает только заголовки и требует отдельного Gmail OAuth-доступа на TV Box.</p>
   <p class="muted">Партнёрский вход MTT SPORTS без CLI появится после согласования официального SSO/API с платформой. Telegram-вход сам по себе не подтверждает игровой EVM-адрес.</p>
  </section>
  <div class="note">Вход на внешнем сайте ещё не доказывает связь аккаунтов. Мы не читаем cookies, не получаем приватные ключи и не включаем вывод средств из игрового кошелька.</div>
@@ -57,6 +67,7 @@
 const tg=window.Telegram?.WebApp;tg?.ready();tg?.expand();
 const $=id=>document.getElementById(id);
 let verifiedAddress=null,busy=false;
+let apiBase=null;
 const setStatus=(head,info)=>{$('status').textContent=head;$('explain').textContent=info};
 async function refresh(){
  if(busy)return;
@@ -66,6 +77,7 @@ async function refresh(){
  try{
   const config=await fetch('./config.json',{cache:'no-store'}).then(r=>r.ok?r.json():Promise.reject(Error('config')));
   const base=new URL(config.apiBaseUrl);
+  apiBase=base.origin;
   if(base.protocol!=='https:')throw Error('insecure_api');
   const response=await fetch(base.origin+'/api/giftmutant/mttsports/status',{
    method:'POST',headers:{'content-type':'application/json'},credentials:'omit',
@@ -73,6 +85,10 @@ async function refresh(){
   });
   const result=await response.json();
   if(!response.ok||result.ok!==true)throw Error(result.error||'status_unavailable');
+  const recipient=result.recipient;
+  $('recipientStatus').textContent=recipient?.status==='self_reported'?
+   '✅ Выбранный адрес получателя (самостоятельно указан, не подтверждён платформой): '+recipient.address:
+   'Адрес получателя ещё не выбран. Открой Play Now и скопируй свой публичный игровой EVM-адрес.';
   const linked=['verified_provider_signed','email_cli_authenticated'].includes(result.status) &&
    /^0x[0-9a-f]{40}$/i.test(result.address||'') &&
    result.chainId===6880;
@@ -91,6 +107,38 @@ async function refresh(){
   setStatus('Не удалось проверить связь','Сервер проверки недоступен. Это не означает, что твой игровой аккаунт отключён. Попробуй позже.');
  }finally{busy=false;$('refresh').disabled=false;}
 }
+$('recipientForm').addEventListener('submit',async event=>{
+ event.preventDefault();
+ const address=$('recipientAddress').value.trim();
+ const status=$('recipientStatus');
+ if(!/^0x[0-9a-fA-F]{40}$/.test(address)||/^0x0{40}$/i.test(address)){
+  status.textContent='Укажи полный ненулевой EVM-адрес, начинающийся с 0x.';return;
+ }
+ if(!$('recipientConfirm').checked){
+  status.textContent='Перед сохранением проверь адрес в MTT SPORTS и поставь отметку.';return;
+ }
+ if(!tg?.initData){status.textContent='Открой эту страницу из GiftMutant в Telegram.';return;}
+ $('saveRecipient').disabled=true;
+ try{
+  if(!apiBase){
+   const config=await fetch('./config.json',{cache:'no-store'}).then(r=>r.json());
+   const base=new URL(config.apiBaseUrl);if(base.protocol!=='https:')throw Error('insecure');
+   apiBase=base.origin;
+  }
+  const res=await fetch(apiBase+'/api/giftmutant/mttsports/recipient/save',{
+   method:'POST',credentials:'omit',cache:'no-store',
+   headers:{'content-type':'application/json'},
+   body:JSON.stringify({initData:tg.initData,address,confirmed:true})
+  });
+  const data=await res.json();
+  if(!res.ok||data.ok!==true)throw Error('recipient_not_saved');
+  status.textContent='✅ Адрес сохранён для твоего Telegram-профиля: '+data.recipient.address+
+   '. Источник: указан пользователем; принадлежность MTT SPORTS пока не доказана.';
+  $('recipientConfirm').checked=false;
+ }catch{
+  status.textContent='Не удалось сохранить адрес. Проверь связь с GiftMutant и повтори.';
+ }finally{$('saveRecipient').disabled=false;}
+});
 $('refresh').addEventListener('click',refresh);
 $('copy').addEventListener('click',async()=>{
  if(!verifiedAddress)return;

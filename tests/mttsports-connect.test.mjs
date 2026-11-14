@@ -15,6 +15,7 @@ test('MTT SPORTS connect is Telegram-authenticated but does not handle email OTP
 });
 test('connected state requires verified provider proof, otherwise not linked',()=>{
  assert.match(page,/verified_provider_signed/);
+ assert.match(page,/email_cli_authenticated/);
  assert.match(page,/chainId===6880/);
  assert.match(page,/0x\[0-9a-f\]/i);
  assert.match(page,/MTT SPORTS не подключён/);

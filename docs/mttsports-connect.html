@@ -44,6 +44,11 @@
   <a class="btn secondary" href="./mttsports-email.html">📧 Вход через Email</a>
   <a class="btn outline" href="https://t.me/MTTSPORTS_bot/MTTSPORTS?startapp=eyJwYXRoIjoiLyIsInBhcmFtcyI6eyJpIjoiYmE0MzRiNWEifX0" rel="noreferrer">📱 Вход через Telegram</a>
  </section>
+ <section>
+  <h2>🔗 Привязка через наш Email CLI</h2>
+  <p class="muted">Для проверки существующего аккаунта отправь в чате GiftMutant команду <strong>/mttlink</strong>. Затем на TV Box запусти <code>mttsports-safe auth email</code>.</p>
+  <p class="muted">Код из письма вводится только в интерактивном терминале. Отдельный код привязки из GiftMutant действует 10 минут. После успешной проверки вернись сюда и нажми «Проверить связь».</p>
+ </section>
  <div class="note">Вход на внешнем сайте ещё не доказывает связь аккаунтов. Мы не читаем cookies, не получаем приватные ключи и не включаем вывод средств из игрового кошелька.</div>
 </main>
 <script type="module">
@@ -66,7 +71,7 @@ async function refresh(){
   });
   const result=await response.json();
   if(!response.ok||result.ok!==true)throw Error(result.error||'status_unavailable');
-  const linked=result.status==='verified_provider_signed' &&
+  const linked=['verified_provider_signed','email_cli_authenticated'].includes(result.status) &&
    /^0x[0-9a-f]{40}$/i.test(result.address||'') &&
    result.chainId===6880;
   if(linked){
@@ -74,7 +79,7 @@ async function refresh(){
    $('walletBox').classList.remove('hidden');
    $('uid').textContent=result.uid||'—';
    $('walletAddress').textContent=verifiedAddress;
-   setStatus('✅ Игровой адрес привязан','MTT SPORTS подтвердил связь адреса с твоим Telegram-профилем. Активность игровой сессии отдельно не проверена.');
+   setStatus(result.status==='email_cli_authenticated'?'✅ Подключён через Email CLI':'✅ Игровой адрес привязан',result.status==='email_cli_authenticated'?'Адрес получен после входа по email-коду через наш CLI. Официальная партнёрская SSO-привязка отдельно не подтверждена.':'Адрес подтверждён партнёрской подписью. Активность игровой сессии отдельно не проверена.');
   }else{
    verifiedAddress=null;$('walletBox').classList.add('hidden');
    setStatus('❌ MTT SPORTS не подключён','Если ты уже вошёл через Email, это ещё не подтверждение для GiftMutant. Платформа пока не передала подписанный UID и игровой адрес.');

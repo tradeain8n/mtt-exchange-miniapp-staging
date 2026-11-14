@@ -315,3 +315,6 @@ body{background:radial-gradient(ellipse 80% 260px at 50% -90px,#153b7b66,transpa
 .swap-route-item.live strong{color:#73e5bf}
 .swap-route-item.unfunded strong{color:#e7b49c}
 .swap-route-item:focus-visible{outline:2px solid #78a9ef}
+
+/* All-in exchange terms stay legible on narrow Telegram screens. */
+.swap-summary{flex-wrap:wrap;row-gap:7px}

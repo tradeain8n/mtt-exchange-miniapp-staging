@@ -49,7 +49,8 @@
   <p class="muted">Для аккаунта, зарегистрированного через Telegram: войди в официальный MTT SPORTS через Play Now, найди игровой EVM-адрес в разделе кошелька и скопируй его сюда. Это сохранит адрес для обмена, но не выдаст его за автоматически подтверждённый MTT SPORTS.</p>
   <form id="recipientForm">
    <label for="recipientAddress" class="muted">Публичный EVM-адрес в MTT Network (6880)</label>
-   <input id="recipientAddress" name="address" required maxlength="42" minlength="42" autocomplete="off" spellcheck="false" placeholder="0x..." style="display:block;width:100%;margin:10px 0;padding:12px;border-radius:10px;background:#0d1728;border:1px solid #526784;color:white;font:14px monospace" />
+   <input id="recipientAddress" name="address" required maxlength="42" minlength="42" autocomplete="off" autocapitalize="off" autocorrect="off" enterkeyhint="done" inputmode="text" spellcheck="false" placeholder="0x..." style="display:block;width:100%;margin:10px 0;padding:12px;border-radius:10px;background:#0d1728;border:1px solid #526784;color:white;font:14px monospace" />
+   <button type="button" class="btn outline" id="pasteRecipient">📋 Вставить адрес из буфера</button>
    <label class="muted"><input id="recipientConfirm" type="checkbox" required /> Я сверил адрес в своём MTT SPORTS и понимаю, что пока это выбранный мной адрес, а не подтверждённая MTT SPORTS привязка.</label>
    <button class="btn primary" id="saveRecipient" type="submit">Сохранить адрес получателя</button>
   </form>
@@ -59,7 +60,7 @@
   <h2>🔗 Привязка через наш Email CLI</h2>
   <p class="muted">Для проверки существующего аккаунта отправь в чате GiftMutant команду <strong>/mttlink</strong>. Затем на TV Box запусти <code>mttsports-safe auth email</code>.</p>
   <p class="muted">Если CLI уже показал EVM-адрес и ожидает код привязки, повторно запрашивать письмо не нужно: получи свежий /mttlink и введи его в терминале. Иначе код из письма вводится только в локальном CLI; срок привязки — 10 минут.</p>
-  <p class="muted">Партнёрский вход MTT SPORTS без CLI появится после согласования официального SSO/API с платформой. Telegram-вход сам по себе не подтверждает игровой EVM-адрес.</p>
+  <p class="muted">Автоматическую привязку Telegram-аккаунтов исследуем через платформенную авторизацию MTT SPORTS и Yaako. Сам по себе Telegram ID не раскрывает игровой кошелёк. Когда платформа вернёт проверенный адрес, поле получателя заполнится автоматически; подтверждение адреса перед сохранением останется обязательным.</p>
  </section>
  <div class="note">Вход на внешнем сайте ещё не доказывает связь аккаунтов. Мы не читаем cookies, не получаем приватные ключи и не включаем вывод средств из игрового кошелька.</div>
 </main>
@@ -94,6 +95,9 @@ async function refresh(){
    result.chainId===6880;
   if(linked){
    verifiedAddress=result.address;
+   // A verified game-account address can be suggested without copying.
+   // Selecting it as a payout recipient still requires explicit confirmation.
+   if(!recipient?.address&&!$('recipientAddress').value) $('recipientAddress').value=verifiedAddress;
    $('walletBox').classList.remove('hidden');
    $('uid').textContent=result.uid||'—';
    $('walletAddress').textContent=verifiedAddress;
@@ -107,6 +111,21 @@ async function refresh(){
   setStatus('Не удалось проверить связь','Сервер проверки недоступен. Это не означает, что твой игровой аккаунт отключён. Попробуй позже.');
  }finally{busy=false;$('refresh').disabled=false;}
 }
+$('pasteRecipient').addEventListener('click',async()=>{
+ const input=$('recipientAddress'),status=$('recipientStatus');
+ try{
+  if(!navigator.clipboard?.readText)throw Error('clipboard_unavailable');
+  const data=(await navigator.clipboard.readText()).trim();
+  if(!/^0x[0-9a-fA-F]{40}$/.test(data)){
+   status.textContent='В буфере нет полного EVM-адреса. Скопируй его в MTT SPORTS.';return;
+  }
+  input.value=data;
+  status.textContent='Адрес вставлен. Сверь его в MTT SPORTS, подтверди выбор и сохрани.';
+ }catch{
+  input.focus();
+  status.textContent='Telegram не разрешил чтение буфера. Нажми и удерживай поле адреса, затем выбери «Вставить».';
+ }
+});
 $('recipientForm').addEventListener('submit',async event=>{
  event.preventDefault();
  const address=$('recipientAddress').value.trim();

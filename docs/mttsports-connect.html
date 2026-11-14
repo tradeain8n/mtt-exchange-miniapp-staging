@@ -47,10 +47,12 @@
  <section>
   <h2>👛 Адрес получателя MTT · Telegram</h2>
   <p class="muted">Для аккаунта, зарегистрированного через Telegram: войди в официальный MTT SPORTS через Play Now, найди игровой EVM-адрес в разделе кошелька и скопируй его сюда. Это сохранит адрес для обмена, но не выдаст его за автоматически подтверждённый MTT SPORTS.</p>
-  <form id="recipientForm">
+  <form id="recipientForm" novalidate>
    <label for="recipientAddress" class="muted">Публичный EVM-адрес в MTT Network (6880)</label>
-   <input id="recipientAddress" name="address" required maxlength="42" minlength="42" autocomplete="off" autocapitalize="off" autocorrect="off" enterkeyhint="done" inputmode="text" spellcheck="false" placeholder="0x..." style="display:block;width:100%;margin:10px 0;padding:12px;border-radius:10px;background:#0d1728;border:1px solid #526784;color:white;font:14px monospace" />
-   <button type="button" class="btn outline" id="pasteRecipient">📋 Вставить адрес из буфера</button>
+   <input id="recipientAddress" name="address" autocomplete="off" autocapitalize="off" autocorrect="off" enterkeyhint="done" inputmode="text" spellcheck="false" placeholder="0x..." style="display:block;width:100%;margin:10px 0;padding:12px;border-radius:10px;background:#0d1728;border:1px solid #526784;color:white;font:14px monospace" />
+   <p class="muted" id="addressLength">В адресе должно быть 40 шестнадцатеричных символов после 0x.</p>
+   <button type="button" class="btn outline" id="pasteRecipient">📋 Вставить адрес</button>
+   <p class="muted">Если Telegram не вставляет автоматически: нажми на поле адреса, удерживай палец и выбери «Вставить».</p>
    <label class="muted"><input id="recipientConfirm" type="checkbox" required /> Я сверил адрес в своём MTT SPORTS и понимаю, что пока это выбранный мной адрес, а не подтверждённая MTT SPORTS привязка.</label>
    <button class="btn primary" id="saveRecipient" type="submit">Сохранить адрес получателя</button>
   </form>
@@ -69,6 +71,24 @@ const tg=window.Telegram?.WebApp;tg?.ready();tg?.expand();
 const $=id=>document.getElementById(id);
 let verifiedAddress=null,busy=false;
 let apiBase=null;
+const normalizedAddress=text=>{
+ const raw=String(text??'').trim().replace(/\s/g,'');
+ return /^[a-fA-F0-9]{40}$/.test(raw)?'0x'+raw:raw;
+};
+const validAddress=text=>/^0x[a-f0-9]{40}$/i.test(text)&&!/^0x0{40}$/i.test(text);
+const addressLength=()=>{
+ const input=$('recipientAddress');
+ const raw=String(input.value??'').trim().replace(/\s/g,'');
+ const count=/^0x/i.test(raw)?Math.max(0,raw.length-2):raw.length;
+ $('addressLength').textContent=validAddress(normalizedAddress(raw))?
+  '✅ Адрес полный: 40/40 символов':
+  'Сейчас '+count+'/40 символов адреса'+(count<40?' — не хватает '+(40-count):' — проверь адрес и префикс 0x');
+};
+$('recipientAddress').addEventListener('input',addressLength);
+$('recipientAddress').addEventListener('paste',()=>{
+ // Native iOS Paste modifies the input after this event.
+ queueMicrotask(addressLength);
+});
 const setStatus=(head,info)=>{$('status').textContent=head;$('explain').textContent=info};
 async function refresh(){
  if(busy)return;
@@ -97,7 +117,7 @@ async function refresh(){
    verifiedAddress=result.address;
    // A verified game-account address can be suggested without copying.
    // Selecting it as a payout recipient still requires explicit confirmation.
-   if(!recipient?.address&&!$('recipientAddress').value) $('recipientAddress').value=verifiedAddress;
+   if(!recipient?.address&&!$('recipientAddress').value){$('recipientAddress').value=verifiedAddress;addressLength();}
    $('walletBox').classList.remove('hidden');
    $('uid').textContent=result.uid||'—';
    $('walletAddress').textContent=verifiedAddress;
@@ -115,24 +135,32 @@ $('pasteRecipient').addEventListener('click',async()=>{
  const input=$('recipientAddress'),status=$('recipientStatus');
  try{
   if(!navigator.clipboard?.readText)throw Error('clipboard_unavailable');
-  const data=(await navigator.clipboard.readText()).trim();
-  if(!/^0x[0-9a-fA-F]{40}$/.test(data)){
-   status.textContent='В буфере нет полного EVM-адреса. Скопируй его в MTT SPORTS.';return;
+  const data=normalizedAddress(await navigator.clipboard.readText());
+  if(!validAddress(data)){
+   input.focus();
+   status.textContent='В буфере нет полного EVM-адреса. Нажми на поле, удерживай палец и выбери «Вставить».';return;
   }
   input.value=data;
-  status.textContent='Адрес вставлен. Сверь его в MTT SPORTS, подтверди выбор и сохрани.';
+  addressLength();
+  status.textContent='✅ Все 42 символа адреса вставлены. Сверь адрес и сохрани.';
  }catch{
   input.focus();
-  status.textContent='Telegram не разрешил чтение буфера. Нажми и удерживай поле адреса, затем выбери «Вставить».';
+  status.textContent='iOS не разрешил автоматическую вставку. Нажми на поле, удерживай палец и выбери «Вставить».';
  }
 });
 $('recipientForm').addEventListener('submit',async event=>{
  event.preventDefault();
- const address=$('recipientAddress').value.trim();
+ const address=normalizedAddress($('recipientAddress').value);
  const status=$('recipientStatus');
- if(!/^0x[0-9a-fA-F]{40}$/.test(address)||/^0x0{40}$/i.test(address)){
-  status.textContent='Укажи полный ненулевой EVM-адрес, начинающийся с 0x.';return;
+ if(!validAddress(address)){
+  const chars=address.replace(/^0x/i,'').length;
+  status.textContent='Адрес не сохранён: '+chars+'/40 символов без префикса 0x. '+
+   (chars<40?'Не хватает '+(40-chars)+' символов. ':'')+
+   'Скопируй полный адрес из MTT SPORTS и вставь его целиком.';
+  addressLength();return;
  }
+ $('recipientAddress').value=address;
+ addressLength();
  if(!$('recipientConfirm').checked){
   status.textContent='Перед сохранением проверь адрес в MTT SPORTS и поставь отметку.';return;
  }

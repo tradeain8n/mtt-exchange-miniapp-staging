@@ -12,7 +12,7 @@ function launch({initData='valid-fixture-data',clipboardAddress=ADDRESS,clipboar
  const elements=new Map(),fetches=[];
  for(const id of ['status','explain','walletBox','uid','walletAddress','copy',
   'refresh','recipientForm','recipientAddress','recipientConfirm','saveRecipient',
-  'recipientStatus','pasteRecipient']){
+  'recipientStatus','pasteRecipient','addressLength']){
   const el={value:'',checked:false,disabled:false,textContent:'',
    events:{},focusCalled:false,
    classList:{add(){},remove(){}},
@@ -44,7 +44,7 @@ function launch({initData='valid-fixture-data',clipboardAddress=ADDRESS,clipboar
  const navigator={clipboard:{async readText(){readCount++;if(clipboardBlocked)throw Error('permission');return clipboardAddress}}};
  runInNewContext(script,{window,navigator,document:{
   getElementById:id=>{assert(elements.has(id));return elements.get(id)}},
-  fetch:fetcher,URL,console});
+  fetch:fetcher,URL,console,queueMicrotask});
  return {get:id=>elements.get(id),fetches,get readCount(){return readCount}};
 }
 const flush=async()=>new Promise(resolve=>setImmediate(resolve));
@@ -96,7 +96,7 @@ test('invalid address and missing consent never call remote write',async()=>{
  v.get('recipientAddress').value='0x123';
  v.get('recipientConfirm').checked=true;
  await v.get('recipientForm').events.submit({preventDefault(){}});
- assert.match(v.get('recipientStatus').textContent,/полный ненулевой EVM-адрес/);
+ assert.match(v.get('recipientStatus').textContent,/Адрес не сохранён: 3\/40/);
  v.get('recipientAddress').value=ADDRESS;
  v.get('recipientConfirm').checked=false;
  await v.get('recipientForm').events.submit({preventDefault(){}});
@@ -115,7 +115,7 @@ test('iOS clipboard permission denial falls back to manual long-press paste',asy
  await flush();
  await v.get('pasteRecipient').events.click();
  assert.equal(v.get('recipientAddress').focusCalled,true);
- assert.match(v.get('recipientStatus').textContent,/Нажми и удерживай поле/);
+ assert.match(v.get('recipientStatus').textContent,/удерживай палец/);
 });
 test('backend failure shows actionable error, not a success confirmation',async()=>{
  const v=launch({saveStatus:401});
@@ -125,4 +125,38 @@ test('backend failure shows actionable error, not a success confirmation',async(
  await v.get('recipientForm').events.submit({preventDefault(){}});
  assert.match(v.get('recipientStatus').textContent,/Не удалось сохранить адрес/);
  assert.equal(v.get('saveRecipient').disabled,false);
+});
+
+test('iPhone-native paste is never blocked by maxlength/minlength constraint',async()=>{
+ assert.match(html,/<form id="recipientForm" novalidate>/);
+ assert.doesNotMatch(html,/maxlength="42"|minlength="42"/);
+ const v=launch();
+ await flush();
+ v.get('recipientAddress').value=ADDRESS;
+ v.get('recipientAddress').events.input();
+ assert.match(v.get('addressLength').textContent,/40\/40/);
+ v.get('recipientConfirm').checked=true;
+ await v.get('recipientForm').events.submit({preventDefault(){}});
+ assert.match(v.get('recipientStatus').textContent,/Адрес сохранён/);
+});
+
+test('a 40-hex-character EVM address without 0x is normalized safely',async()=>{
+ const v=launch();
+ await flush();
+ v.get('recipientAddress').value=ADDRESS.slice(2);
+ v.get('recipientConfirm').checked=true;
+ await v.get('recipientForm').events.submit({preventDefault(){}});
+ const req=v.fetches.find(x=>x.url.endsWith('/recipient/save'));
+ assert.equal(JSON.parse(req.options.body).address,ADDRESS);
+ assert.equal(v.get('recipientAddress').value,ADDRESS);
+});
+
+test('truncated copied address shows exact missing count, never a browser validity bubble',async()=>{
+ const v=launch();
+ await flush();
+ v.get('recipientAddress').value=ADDRESS.slice(8);
+ v.get('recipientConfirm').checked=true;
+ await v.get('recipientForm').events.submit({preventDefault(){}});
+ assert.match(v.get('recipientStatus').textContent,/Не хватает 6 символов/);
+ assert.equal(v.fetches.filter(x=>x.url.endsWith('/recipient/save')).length,0);
 });

@@ -32,7 +32,8 @@ const routeReasons={
  ton_pilot_not_ready:'Резерв есть, но TON-пилот временно не принимает заявки.',
  bsc_deposit_attribution_not_deployed:'Резерв MTT есть; приём BSC ещё требует подтверждения депозита.',
  usdt_mtt_deposit_settlement_not_deployed:'Резерв MTT есть; автоматический приём USDT MTT ещё не подключён.',
- mtt_native_amm_direct_customer_payout:'MTT → USDT MTT: прямой обмен через проверенный пул.',
+ mtt_native_amm_direct_customer_payout:'MTT → USDT MTT: обмен через проверенный контракт, прибыль остаётся в MTT.',
+ mtt_fee_swap_contract_not_deployed:'Котировка работает. Подписание продажи ожидает проверки контракта.',
  ton_payout_signer_not_deployed:'USDT TON на центральном кошельке есть; выплата клиентам ещё не подключена.',
  bsc_payout_treasury_empty_or_unverified:'USDT BSC на центральном кошельке отсутствует.',
 };
@@ -117,8 +118,8 @@ function syncSwapControls({changedToken=false}={}){
  el('source-amount-symbol').textContent=token;
  el('destination-amount-symbol').textContent=outputToken();
  el('destination-token-label').textContent=outputToken();
- el('swap-fee-value').textContent=sell?'0%':'10%';
- el('swap-fee-value').title=sell?'Прямой обмен: только комиссия пула и сети':'Комиссия пилотной покупки';
+ el('swap-fee-value').textContent=sell?'Учтено в курсе':'10%';
+ el('swap-fee-value').title=sell?'Итоговый курс включает сервисную наценку и комиссию пула':'Комиссия пилотной покупки';
  el('sell-review').classList.add('hidden');
  sellDraft=null;
  updateRecipient();
@@ -197,7 +198,7 @@ async function prepareSell(){
    'Продать '+res.sell.amountMtt+' MTT за ориентировочно '+res.sell.expectedUsdt+
    ' USDT. Минимум к получению: '+res.sell.minimumUsdt+
    ' USDT (MTT Network). Получатель: '+fmt(res.sell.recipient)+
-   '. Комиссия сервиса 0%; газ оплачивается в MTT.';
+   '. Курс учитывает сервисную наценку; газ оплачивается в MTT.';
   el('sell-review-status').textContent='Проверьте сумму и нажмите подтверждение.';
   el('sell-confirm').classList.remove('hidden');
   el('sell-refresh').classList.add('hidden');

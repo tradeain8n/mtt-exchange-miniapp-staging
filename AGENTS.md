@@ -1,0 +1,1 @@
+GiftMutant staging Mini App. Read ../mtt-exchange-engine-staging/AGENTS.md. Edit ONLY staging UI. Quote must include service price, show full MTT debit and net USDT output. Check only changed tests. No production deployment or wallet keys.\n

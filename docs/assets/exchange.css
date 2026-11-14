@@ -289,3 +289,18 @@ body{background:radial-gradient(ellipse 80% 260px at 50% -90px,#153b7b66,transpa
 .swap-liquidity>div{border-top:1px solid #314462;padding:11px 2px 7px;display:flex;flex-direction:column;gap:6px;min-width:0}
 .swap-liquidity span{color:#98b1d4;font-weight:650;font-size:11px}
 .swap-liquidity strong{font-size:clamp(16px,4.3vw,21px);line-height:1.24;letter-spacing:-.02em;color:#e8f2ff;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+
+/* GiftMutant 3-chain swap controls and route-specific balances. */
+.swap-token select{max-width:110px;background:transparent;border:0;color:inherit;font:inherit;font-weight:800;outline:0;cursor:pointer}
+.swap-token select option{color:#e8faff;background:#172641}
+.swap-selected-balance{display:flex;justify-content:space-between;gap:10px;align-items:center;color:#95add1;font-size:12px;margin:-7px 0 15px}
+.swap-selected-balance strong{font-size:13px;color:#e0ebff;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+#amount:not([readonly]){cursor:text}
+#amount:focus-visible{outline:2px solid #6ca5f7;outline-offset:3px;border-radius:6px}
+#swap-reverse{cursor:pointer;min-width:44px;height:44px;touch-action:manipulation}
+#swap-reverse:focus-visible{outline:2px solid white;outline-offset:2px}
+.swap-limit-caption{color:#8da4c7;font-size:11px;margin:4px 3px 13px;line-height:1.5}
+.swap-sell-review{border:1px solid #3d6295;border-radius:18px;padding:14px;margin-top:13px;background:#172843}
+.swap-sell-review h3{font-size:16px;color:#f0f5ff;margin:0 0 9px}
+.swap-sell-review p{font-size:12px;color:#b8cce7;overflow-wrap:anywhere;line-height:1.55}
+.swap-sell-review .action{margin-top:8px}

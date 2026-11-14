@@ -4,6 +4,7 @@ import {mttSendRequest,validMttSendInput} from './mtt-send-client.js';
 import {loadChainPortfolio,NETWORKS_WALLET} from './wallet-portfolio.js';
 import {parseUsdt,formatWei,fetchLiveReserves,calculateQuote} from './quote.js';
 import {readWalletFragment} from './exchange-model.js';
+import {exchangeRoute,parseInput,EXCHANGE_NETWORKS} from './swap-routes.js';
 
 const tg=window.Telegram?.WebApp;
 try{
@@ -23,6 +24,163 @@ let latestEstimate=null,lastQuoteAt=0;
 let internalTonPayment=null,internalTonBusy=false;
 let liveGiftmutantReadiness=null;
 let liquidityReading=false;
+let swapBalanceVersion=0,routeVersion=0,quoteDebounce=null;
+let sellDraft=null,sellBusy=false;
+const swapChoice=()=>exchangeRoute({
+ inputToken:el('source-token').value,inputNetwork:el('network').value,
+ outputNetwork:el('destination-network').value,amount:el('amount').value
+});
+const outputToken=()=>el('source-token').value==='MTT'?'USDT':'MTT';
+function syncSwapControls({changedToken=false}={}){
+ const token=el('source-token').value;
+ const sell=token==='MTT';
+ for(const option of el('network').options){
+  option.disabled=!EXCHANGE_NETWORKS[option.value].tokens.includes(token);
+ }
+ if(!EXCHANGE_NETWORKS[el('network').value].tokens.includes(token))
+  el('network').value=sell?'mtt':'ton';
+ for(const option of el('destination-network').options)
+  option.disabled=!EXCHANGE_NETWORKS[option.value].tokens.includes(outputToken());
+ if(!EXCHANGE_NETWORKS[el('destination-network').value].tokens.includes(outputToken()))
+  el('destination-network').value='mtt';
+ if(changedToken)el('amount').value=sell?'5000':'3.00';
+ el('source-amount-symbol').textContent=token;
+ el('destination-amount-symbol').textContent=outputToken();
+ el('destination-token-label').textContent=outputToken();
+ el('swap-fee-value').textContent=sell?'0%':'10%';
+ el('swap-fee-value').title=sell?'Прямой обмен: только комиссия пула и сети':'Комиссия пилотной покупки';
+ el('sell-review').classList.add('hidden');
+ sellDraft=null;
+ updateRecipient();
+ void refreshSwapBalances();
+ scheduleQuote();
+}
+function scheduleQuote(){
+ const version=++routeVersion;
+ quoteReady=false;latestEstimate=null;
+ el('result').textContent='—';
+ if(quoteDebounce)clearTimeout(quoteDebounce);
+ setAction();
+ quoteDebounce=setTimeout(()=>{if(version===routeVersion)void refreshQuote()},280);
+}
+async function refreshSwapBalances(){
+ const version=++swapBalanceVersion;
+ const source=el('network').value,target=el('destination-network').value;
+ const input=el('source-token').value,output=outputToken();
+ el('swap-from-balance').textContent='Загрузка…';
+ el('swap-to-balance').textContent='Загрузка…';
+ if(!wallet.evm||!wallet.ton){
+  el('swap-from-balance').textContent='—';
+  el('swap-to-balance').textContent='—';return;
+ }
+ try{
+  const entries=await Promise.all([...new Set([source,target])]
+   .map(async network=>[network,await loadChainPortfolio(network,wallet)]));
+  if(version!==swapBalanceVersion)return;
+  const byNetwork=Object.fromEntries(entries);
+  const text=(network,asset)=>{
+   const value=byNetwork[network]?.assets?.find(a=>a.symbol===asset);
+   return value?.state==='verified'?value.balance+' '+asset:'Нет данных';
+  };
+  el('swap-from-balance').textContent=text(source,input);
+  el('swap-to-balance').textContent=text(target,output);
+ }catch{
+  if(version===swapBalanceVersion){
+   el('swap-from-balance').textContent='Нет связи';
+   el('swap-to-balance').textContent='Нет связи';
+  }
+ }
+}
+async function sellRequest(action,values={}){
+ if(!gateway||!tg?.initData)throw Error('Откройте приложение из Telegram-бота.');
+ const resp=await fetch(gateway+'/api/giftmutant/sell/'+action,{
+  method:'POST',headers:{'content-type':'application/json'},cache:'no-store',
+  credentials:'omit',referrerPolicy:'no-referrer',
+  body:JSON.stringify({initData:tg.initData,...values}),
+  signal:AbortSignal.timeout(18000)
+ });
+ const data=await resp.json();
+ if(!resp.ok||data.ok!==true)throw Error(data.error||'mtt_sell_temporarily_unavailable');
+ return data;
+}
+const sellReason=e=>({
+ backup_confirmation_required:'Подтвердите сохранение резервной фразы в разделе кошелька.',
+ sell_insufficient_mtt:'Недостаточно MTT для обмена и комиссии.',
+ sell_usd_limit_0_1_to_20:'Лимит продажи: от 0,10 до 20 USDT по текущему курсу.',
+ sell_pending_nonce:'Кошелёк ещё обрабатывает предыдущую транзакцию.',
+ sell_already_pending:'Сначала проверьте предыдущую продажу.',
+ sell_slippage_exceeded:'Цена изменилась. Запросите новую котировку.',
+ sell_intent_expired:'Котировка устарела. Создайте новую заявку.',
+ telegram_session_expired:'Сессия Telegram устарела. Откройте приложение заново.',
+ mtt_sell_not_available:'Продажа временно недоступна на сервере.'
+})[e?.message]||'Продажа пока недоступна: '+String(e?.message||e).slice(0,65);
+async function prepareSell(){
+ const choice=swapChoice();
+ if(!choice.liveSell||!quoteReady||sellBusy)return;
+ sellBusy=true;setAction();
+ try{
+  await getAuthenticatedWallet();
+  const res=await sellRequest('prepare',{amountMtt:el('amount').value.replace(',','.')});
+  sellDraft=res.sell;
+  el('sell-review-summary').textContent=
+   'Продать '+res.sell.amountMtt+' MTT за ориентировочно '+res.sell.expectedUsdt+
+   ' USDT. Минимум к получению: '+res.sell.minimumUsdt+
+   ' USDT (MTT Network). Получатель: '+fmt(res.sell.recipient)+
+   '. Комиссия сервиса 0%; газ оплачивается в MTT.';
+  el('sell-review-status').textContent='Проверьте сумму и нажмите подтверждение.';
+  el('sell-confirm').classList.remove('hidden');
+  el('sell-refresh').classList.add('hidden');
+  el('sell-review').classList.remove('hidden');
+ }catch(e){setFeedback(sellReason(e),true)}
+ finally{sellBusy=false;setAction()}
+}
+async function confirmSell(){
+ if(!sellDraft||sellBusy||sellDraft.state!=='prepared')return;
+ sellBusy=true;el('sell-confirm').disabled=true;
+ el('sell-review-status').textContent='Подписываем продажу и фиксируем транзакцию…';
+ try{
+  const result=await sellRequest('confirm',{intentId:sellDraft.id,
+   confirmation:'SELL_MTT_FOR_USDT_MTT'});
+  sellDraft=result.sell;
+  renderSellStatus();
+ }catch(e){
+  el('sell-review-status').textContent=sellReason(e)+
+   ' Проверьте статус перед повторным действием.';
+  el('sell-refresh').classList.remove('hidden');
+  el('sell-confirm').classList.add('hidden');
+ }finally{sellBusy=false;el('sell-confirm').disabled=false;setAction()}
+}
+function renderSellStatus(){
+ if(!sellDraft)return;
+ const states={
+  prepared:'Ожидает подтверждения.',
+  signing:'Подготавливается подпись; не отправляйте повторно.',
+  signed:'Подписана. Проверяем блокчейн…',
+  broadcast:'Отправлена в MTT Network. Ожидаем подтверждения…',
+  confirmed:'Продажа исполнена. USDT зачислены на ваш кошелёк MTT Network.',
+  manual_review:'Нужна проверка выплаты. Не повторяйте операцию.',
+  reverted:'Транзакция отклонена сетью.',expired:'Время заявки истекло.',
+  failed:'Операция не выполнена.',interrupted:'Статус требует проверки.'
+ };
+ el('sell-review-status').textContent=states[sellDraft.state]||'Проверяем статус продажи.';
+ if(sellDraft.txHash){
+  const a=el('sell-review-status');
+  a.textContent+=' TX: '+sellDraft.txHash.slice(0,10)+'…'+sellDraft.txHash.slice(-8);
+ }
+ el('sell-confirm').classList.toggle('hidden',sellDraft.state!=='prepared');
+ el('sell-refresh').classList.toggle('hidden',!['signing','signed','broadcast','manual_review'].includes(sellDraft.state));
+ el('sell-review').classList.remove('hidden');
+ if(sellDraft.state==='confirmed')void refreshSwapBalances();
+}
+async function checkSellStatus(){
+ if(!sellDraft||sellBusy)return;
+ try{
+  const r=await sellRequest('status',{intentId:sellDraft.id});
+  if(r.sell)sellDraft=r.sell;
+  renderSellStatus();
+ }catch(e){el('sell-review-status').textContent=sellReason(e);}
+}
+
 function displayMttAmount(value){
  if(typeof value!=='string'||!/^\d+(?:\.\d+)?$/.test(value))return '—';
  const amount=Number(value);
@@ -476,8 +634,10 @@ function setFeedback(message,warning=false){
  node.classList.toggle('error',warning);
 }
 function updateRecipient(){
- el('evm-recipient').value=wallet.evm||'';
- el('swap-evm-target').textContent=fmt(wallet.evm);
+ const network=el('destination-network')?.value||'mtt';
+ const address=network==='ton'?wallet.ton:wallet.evm;
+ el('evm-recipient').value=address||'';
+ el('swap-evm-target').textContent=fmt(address);
 }
 async function getAuthenticatedWallet(){
  if(!gateway||!tg?.initData)throw Error('Откройте GiftMutant через кнопку Telegram-бота.');
@@ -493,6 +653,7 @@ async function getAuthenticatedWallet(){
     'Личный кошелёк не найден. Откройте «Мой кошелёк» в боте.');
  wallet.evm=data.wallet.evm;wallet.ton=data.wallet.ton;
  walletScreen();updateRecipient();
+ void refreshSwapBalances();
  return data.wallet;
 }
 function showStage(stage){
@@ -520,45 +681,82 @@ async function refreshLiveReadiness(){
   if(!resp.ok||data.route!=='TON_USDT_TO_MTT')
    throw Error('invalid_giftmutant_readiness');
   liveGiftmutantReadiness=data;
-  if(!currentOrder){
+  if(!currentOrder&&swapChoice().livePilot){
    if(!data.accepting)setFeedback(
     readinessMessage[data.reason]||'Обмен временно недоступен.',true);
    else if(quoteReady)setFeedback('Готово к обмену · 3 USD₮ TON → MTT Network');
   }
  }catch{
   liveGiftmutantReadiness={accepting:false,reason:'connection_unavailable'};
-  if(!currentOrder)setFeedback('Нет связи с обменником. Проверяем подключение…',true);
+  if(!currentOrder&&swapChoice().livePilot)
+   setFeedback('Нет связи с обменником. Проверяем подключение…',true);
  }
  setAction();
 }
 function setAction(){
- const button=el('swap-main');
- if(placingOrder){button.disabled=true;button.textContent='Создаём заявку…';return;}
- button.disabled=quoteLoading||!gateway||!tg?.initData||!wallet.evm||!wallet.ton||
-  liveGiftmutantReadiness?.accepting!==true;
- button.textContent=liveGiftmutantReadiness?.accepting===false
-  ?'Обмен временно недоступен':quoteReady?'Продолжить':'Обновить курс';
+ const button=el('swap-main'),choice=swapChoice();
+ if(placingOrder||sellBusy){
+  button.disabled=true;button.textContent='Подготавливаем обмен…';return;
+ }
+ if(!choice.valid){
+  button.disabled=true;button.textContent='Проверьте сумму и маршрут';return;
+ }
+ if(choice.quoteOnly){
+  button.disabled=true;button.textContent='Маршрут: только котировка';return;
+ }
+ const permitted=choice.liveSell||liveGiftmutantReadiness?.accepting===true;
+ button.disabled=quoteLoading||!quoteReady||!permitted||!gateway||
+  !tg?.initData||!wallet.evm||!wallet.ton;
+ button.textContent=choice.liveSell?'Продать MTT':!permitted
+  ?'Обмен временно недоступен':'Продолжить';
 }
 async function refreshQuote(){
  if(quoteLoading||currentOrder)return;
+ const version=routeVersion,choice=swapChoice();
+ if(!choice.valid){
+  quoteReady=false;
+  el('result').textContent='—';
+  el('quote-note').textContent='Лимиты: 0,10–20 USD';
+  setFeedback(choice.reason,true);setAction();return;
+ }
  quoteLoading=true;setAction();
  el('quote-note').textContent='Курс обновляется';
  try{
-  const reserves=await fetchLiveReserves();
-  const estimate=calculateQuote(parseUsdt('3.00'),reserves);
-  latestEstimate=estimate;lastQuoteAt=Date.now();quoteReady=true;
-  el('result').textContent='≈ '+formatWei(estimate.amountOut,0);
-  el('quote-note').textContent='Курс предварительный';
-  if(liveGiftmutantReadiness?.accepting!==false)
-   setFeedback(wallet.evm&&wallet.ton
-    ?'MTT поступят на ваш привязанный кошелёк'
-    :'Подключаем личный кошелёк…');
- }catch{
+  if(choice.kind==='sell'){
+   // The server quotes the verified MTT router; no invented cross-chain rate.
+   const response=await sellRequest('quote',{
+    amountMtt:el('amount').value.replace(',','.')
+   });
+   if(version!==routeVersion)return;
+   latestEstimate=response.quote;
+   el('result').textContent='≈ '+Number(response.quote.expectedUsdt)
+    .toLocaleString('ru-RU',{maximumFractionDigits:6});
+   el('quote-note').textContent=choice.liveSell
+    ?'Курс пула · минимум '+Number(response.quote.minimumUsdt)
+     .toLocaleString('ru-RU',{maximumFractionDigits:6})+' USDT'
+    :'Курс пула; комиссии межсетевого вывода не учтены';
+  }else{
+   const reserves=await fetchLiveReserves();
+   const estimate=calculateQuote(parseUsdt(el('amount').value),reserves);
+   if(version!==routeVersion)return;
+   latestEstimate=estimate;
+   el('result').textContent='≈ '+formatWei(estimate.amountOut,0);
+   el('quote-note').textContent='Предварительная котировка из пула MTT';
+  }
+  lastQuoteAt=Date.now();quoteReady=true;
+  setFeedback(choice.reason,choice.quoteOnly);
+ }catch(e){
+  if(version!==routeVersion)return;
   quoteReady=false;latestEstimate=null;
   el('result').textContent='—';
   el('quote-note').textContent='Нет котировки';
-  setFeedback('Не удалось получить курс. Нажмите «Обновить курс».',true);
- }finally{quoteLoading=false;setAction();}
+  const message=choice.kind==='sell'?sellReason(e):
+   'Не удалось получить курс. Проверьте сумму и подключение.';
+  setFeedback(message,true);
+ }finally{quoteLoading=false;
+  if(version!==routeVersion){setAction();scheduleQuote()}
+  else setAction();
+ }
 }
 const pilotError=error=>{
  const map={
@@ -708,7 +906,8 @@ async function loadPilotStatus(){
  return null;
 }
 async function createOrder(){
- if(placingOrder||!quoteReady||!gateway||liveGiftmutantReadiness?.accepting!==true)return;
+ if(!swapChoice().livePilot||placingOrder||!quoteReady||!gateway||
+  liveGiftmutantReadiness?.accepting!==true)return;
  placingOrder=true;setAction();
  try{
   await getAuthenticatedWallet(); // never trust a fragment-only address
@@ -744,6 +943,13 @@ async function bootSwap(){
   await getAuthenticatedWallet();
   void refreshBackupStatus();
   void refreshGiftmutantLiquidity();
+  void refreshSwapBalances();
+  try{
+   const prior=await sellRequest('status');
+   if(prior.sell&&['prepared','signing','signed','broadcast','manual_review'].includes(prior.sell.state)){
+    sellDraft=prior.sell;renderSellStatus();
+   }
+  }catch{/* Sell status is optional; legacy swap remains usable. */}
   const existing=await loadPilotStatus();
   if(!existing){await refreshLiveReadiness();await refreshQuote();}
  }catch(error){
@@ -751,9 +957,34 @@ async function bootSwap(){
   quoteReady=false;setAction();
  }
 }
+el('source-token').addEventListener('change',()=>syncSwapControls({changedToken:true}));
+el('network').addEventListener('change',()=>syncSwapControls());
+el('destination-network').addEventListener('change',()=>syncSwapControls());
+el('swap-reverse').addEventListener('click',()=>{
+ el('source-token').value=el('source-token').value==='USDT'?'MTT':'USDT';
+ el('network').value=el('source-token').value==='MTT'?'mtt':'ton';
+ el('destination-network').value='mtt';
+ syncSwapControls({changedToken:true});
+});
+el('amount').addEventListener('input',()=>{
+ if(sellDraft?.state==='prepared')sellDraft=null;
+ el('sell-review').classList.add('hidden');
+ scheduleQuote();
+});
 el('swap-main').addEventListener('click',async()=>{
- if(!quoteReady)await refreshQuote();
- else await createOrder();
+ const route=swapChoice();
+ if(!quoteReady){await refreshQuote();return}
+ if(route.liveSell)await prepareSell();
+ else if(route.livePilot)await createOrder();
+});
+el('sell-confirm').addEventListener('click',()=>void confirmSell());
+el('sell-refresh').addEventListener('click',()=>void checkSellStatus());
+el('sell-cancel').addEventListener('click',()=>{
+ if(sellDraft&&['signed','broadcast','signing'].includes(sellDraft.state)){
+  el('sell-review-status').textContent='Сделка уже отправлена. Проверяйте статус; повторно не продавайте.';
+  return;
+ }
+ el('sell-review').classList.add('hidden');sellDraft=null;
 });
 el('swap-pay').addEventListener('click',()=>void previewInternalTonPayment());
 el('swap-pay-confirm').addEventListener('click',()=>void confirmInternalTonPayment());
@@ -788,6 +1019,7 @@ const openBot=()=>{
 };
 el('open-wallet-bot').addEventListener('click',openBot);
 updateRecipient();
+syncSwapControls();
 void bootSwap();
 window.setInterval(()=>{
  if(currentOrder&&currentOrder.state!=='completed'){
@@ -797,3 +1029,8 @@ window.setInterval(()=>{
  else if(!currentOrder)void refreshLiveReadiness();
 },15000);
 window.setInterval(()=>void refreshGiftmutantLiquidity(),20000);
+window.setInterval(()=>{
+ if(sellDraft&&['signing','signed','broadcast'].includes(sellDraft.state))
+  void checkSellStatus();
+},12000);
+window.setInterval(()=>void refreshSwapBalances(),45000);

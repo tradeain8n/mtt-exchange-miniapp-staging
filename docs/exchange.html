@@ -7,10 +7,10 @@
 <meta name="robots" content="noindex,nofollow">
 <meta name="description" content="GiftMutant — обмен USDT на MTT и личный кошелёк BSC TON MTT">
 <link rel="icon" href="./icon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="./assets/exchange.css?v=10">
+<link rel="stylesheet" href="./assets/exchange.css?v=11">
 <title>GiftMutant · Обмен и кошелёк</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-<script type="module" src="./assets/exchange.js?v=10"></script>
+<script type="module" src="./assets/exchange.js?v=11"></script>
 </head>
 <body>
 <div class="shell">
@@ -24,30 +24,36 @@
     <button id="tab-wallet" type="button" data-tab="wallet" class="tab" aria-selected="false" aria-controls="view-wallet"><span aria-hidden="true">◫</span> Мой кошелёк</button>
   </nav>
   <main>
-        <section id="view-swap" class="view" aria-label="Обмен USD₮ TON на MTT">
+        <section id="view-swap" class="view" aria-label="Обмен USDT и MTT в TON, BSC и MTT Network">
       <div id="swap-input-stage">
         <div class="swap-card">
-          <div class="swap-card-heading"><h1>Отдаёте</h1><span class="swap-token"><span class="swap-token-icon">₮</span> USD₮</span></div>
+          <div class="swap-card-heading"><h1>Отдаёте</h1><label class="swap-token" for="source-token"><span class="swap-token-icon">⇄</span><select id="source-token" aria-label="Токен списания"><option value="USDT">USDT</option><option value="MTT">MTT</option></select></label></div>
           <div class="swap-big-amount">
             <label for="amount" class="sr-only">Сумма USD₮</label>
-            <input id="amount" value="3.00" inputmode="decimal" readonly aria-label="Сумма обмена 3 USD₮">
-            <span>USDT</span>
+            <input id="amount" value="3.00" inputmode="decimal" maxlength="28" autocomplete="off" aria-label="Сумма списания">
+            <span id="source-amount-symbol">USDT</span>
           </div>
+          <div class="swap-selected-balance" aria-live="polite"><span>Ваш баланс</span><strong id="swap-from-balance">—</strong></div>
           <div class="swap-network-row">
             <label for="network">Сеть списания</label>
             <select id="network" aria-label="Сеть списания">
               <option value="ton" selected>TON</option>
+              <option value="bsc">BNB Smart Chain</option>
+              <option value="mtt">MTT Network</option>
             </select>
           </div>
         </div>
-        <div class="swap-arrow-modern" aria-hidden="true">↓</div>
+        <button id="swap-reverse" type="button" class="swap-arrow-modern" aria-label="Поменять местами покупку и продажу" title="Купить / продать MTT">⇅</button>
         <div class="swap-card">
-          <div class="swap-card-heading"><h2>Получаете</h2><span class="swap-token mtt"><span class="swap-token-icon">✦</span> MTT</span></div>
-          <div class="swap-big-amount swap-amount-out"><output id="result" aria-live="polite">—</output><span>MTT</span></div>
+          <div class="swap-card-heading"><h2>Получаете</h2><span class="swap-token mtt"><span class="swap-token-icon">✦</span><strong id="destination-token-label">MTT</strong></span></div>
+          <div class="swap-big-amount swap-amount-out"><output id="result" aria-live="polite">—</output><span id="destination-amount-symbol">MTT</span></div>
+          <div class="swap-selected-balance" aria-live="polite"><span>Ваш баланс</span><strong id="swap-to-balance">—</strong></div>
           <div class="swap-network-row">
             <label for="destination-network">Сеть поступления</label>
             <select id="destination-network" aria-label="Сеть поступления">
               <option value="mtt" selected>MTT Network</option>
+              <option value="bsc">BNB Smart Chain</option>
+              <option value="ton">TON</option>
             </select>
           </div>
           <div class="swap-wallet-row">
@@ -56,7 +62,7 @@
           </div>
         </div>
         <div class="swap-summary">
-          <span>Комиссия сервиса <strong>10%</strong></span>
+          <span>Комиссия сервиса <strong id="swap-fee-value">10%</strong></span>
           <span id="quote-note">Получаем курс…</span>
         </div>
         <div class="swap-liquidity" aria-label="Доступная ликвидность MTT" aria-live="polite">
@@ -64,7 +70,16 @@
           <div><span>MTT для продажи</span><strong id="liquidity-mtt-sell">—</strong></div>
         </div>
         <p id="swap-message" class="swap-feedback" role="status" aria-live="polite">Проверяем ваш кошелёк…</p>
+        <p class="swap-limit-caption">Лимиты: от 0,10 до 20 USD в эквиваленте. Доступность исполнения зависит от маршрута.</p>
         <button id="swap-main" type="button" class="action action-primary" disabled>Проверяем обмен…</button>
+        <div id="sell-review" class="swap-sell-review hidden" aria-live="polite">
+          <h3>Подтвердить продажу MTT</h3>
+          <p id="sell-review-summary"></p>
+          <p id="sell-review-status">Проверьте курс и минимальную выплату.</p>
+          <button id="sell-confirm" type="button" class="action action-primary">Продать MTT за USDT</button>
+          <button id="sell-refresh" type="button" class="action action-secondary hidden">Проверить статус сделки</button>
+          <button id="sell-cancel" type="button" class="action action-secondary">Назад</button>
+        </div>
       </div>
       <div id="swap-checkout" class="hidden">
         <button id="swap-back" type="button" class="swap-back" aria-label="Вернуться к расчёту">‹ Назад</button>

@@ -1,0 +1,19 @@
+:root{color-scheme:dark;--bg:#0b1224;--panel:#151f38;--panel2:#1b2b48;--stroke:#314366;--muted:#a0b4d2;--ink:#f2f6ff;--blue:#4975f4;--ok:#74dfb9}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:var(--bg);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--ink);line-height:1.48}
+.shell{margin:auto;max-width:760px;padding:24px 17px 65px}
+.header,.brand,.heading,.account-head,.pager,.rate,.tabs{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{justify-content:flex-start}.logo{border-radius:15px;background:#526bca;color:white;font-size:28px;font-weight:900;padding:9px 15px}.eyebrow{letter-spacing:.16em;font-size:10px;font-weight:800;color:#9fc1fc}.header h1{font-size:25px;margin:0}.tag{border:1px solid #5671a7;border-radius:30px;padding:7px 10px;color:#9db7e9;font-size:11px;white-space:nowrap}
+.banner,.panel,.stats{border:1px solid var(--stroke);background:var(--panel);border-radius:22px;padding:20px;margin-top:20px}.banner{font-size:14px;color:#c5d3ea}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-bottom:14px}.stats>div{background:var(--panel2);padding:13px;border-radius:14px}.stats strong{font-size:23px}.meta,.hint,.rate span{font-size:12px;color:var(--muted)}.hint{line-height:1.7;margin:8px 0 17px}
+.tabs{justify-content:stretch;gap:4px;border-radius:15px;background:#15213a;padding:5px;margin-top:17px}.tab{flex:1;border:0;background:transparent;color:#9eb4d5;cursor:pointer;padding:12px 4px;border-radius:10px;font-size:12px;font-weight:700}.tab.active{color:#fff;background:#345ab4}
+.panel{margin-top:14px}.heading h2,h2{font-size:19px;margin:0 0 10px}.heading h2{margin:0}.heading{margin-bottom:10px}
+button{font-family:inherit;cursor:pointer;touch-action:manipulation}button:disabled{opacity:.43;cursor:not-allowed}.ghost{border:1px solid #516a95;background:#243454;border-radius:12px;padding:9px 12px;color:#d9e6fc;font-size:12px;font-weight:700}
+.label{display:block;color:var(--muted);font-size:12px;margin:7px 0}
+input{border:1px solid #526489;background:#0c182c;color:#fff;border-radius:12px;padding:13px 14px;font:inherit;font-size:14px;width:100%;min-width:0}
+input:focus-visible,.tab:focus-visible,button:focus-visible{outline:2px solid #9dbdff;outline-offset:2px}
+.accounts{display:flex;flex-direction:column;gap:10px;margin:16px 0}.account{border:1px solid #2e4261;border-radius:14px;padding:13px;background:#192640}
+.account-head strong{font-size:14px}.id{font-size:11px;color:#9bb8df;word-break:break-all}.fields{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.field{min-width:0;display:flex;flex-direction:column;gap:4px}.field strong{font-size:12px;overflow-wrap:anywhere}.admin-tag{display:inline-block;margin-top:9px;font-size:10px;color:#9af2c9}
+.pager{margin-top:12px;color:var(--muted);font-size:12px}.form{display:flex;flex-direction:column;gap:13px;margin-top:18px}.rate{background:#1a2945;padding:14px;border-radius:15px;border:1px solid #344968}.rate>div:first-child{display:flex;flex-direction:column;gap:4px}.rate strong{font-size:14px}.percent{display:flex;align-items:center;gap:7px;width:125px}.percent input{width:100%;text-align:right}.percent span{font-size:15px;font-weight:800}.example{background:#101f37;padding:14px;border-radius:13px}.example #preview{margin-top:8px;color:var(--ok);font-size:13px;font-weight:650;line-height:1.6}
+.primary{border:0;color:white;background:linear-gradient(110deg,#397efa,#4963d7);padding:15px;border-radius:13px;font-size:15px;font-weight:800}.status{font-size:12px;color:#b9d1ff;margin:0}footer{text-align:center;color:#7088af;font-size:11px;margin-top:27px}
+@media(max-width:390px){.shell{padding:14px 12px 45px}.panel{padding:15px}.header h1{font-size:21px}.tag{display:none}.tab{font-size:11px}.fields{gap:8px}}

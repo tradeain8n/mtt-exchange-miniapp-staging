@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="ru">
+<head>
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1,viewport-fit=cover">
+ <meta name="theme-color" content="#101A32">
+ <meta name="robots" content="noindex,nofollow">
+ <title>GiftMutant · Админ-панель</title>
+ <link rel="stylesheet" href="./assets/giftmutant-admin.css?v=1">
+ <script src="https://telegram.org/js/telegram-web-app.js"></script>
+ <script type="module" src="./assets/giftmutant-admin.js?v=1"></script>
+</head>
+<body>
+ <main class="shell">
+  <header class="header">
+   <div class="brand"><div class="logo">✦</div>
+    <div><div class="eyebrow">TEST · GIFTMUTANT</div>
+    <h1>Админ-панель</h1></div>
+   </div>
+   <span class="tag">MTT Network</span>
+  </header>
+  <section id="lock" role="status" class="banner">Проверяем доступ администратора через Telegram…</section>
+  <div id="admin" hidden>
+   <div class="stats" id="totals">
+    <div><div class="meta">Аккаунты</div><strong id="total-users">—</strong></div>
+    <div><div class="meta">Уровней</div><strong>3</strong></div>
+   </div>
+   <nav class="tabs" aria-label="Разделы админки">
+    <button type="button" class="tab active" data-tab="users" aria-selected="true">👥 Аккаунты</button>
+    <button type="button" class="tab" data-tab="settings" aria-selected="false">⚙️ Отчисления</button>
+    <button type="button" class="tab" data-tab="withdrawals" aria-selected="false">💸 Выплаты</button>
+   </nav>
+   <section id="panel-users" class="panel">
+    <div class="heading"><h2>Зарегистрированные</h2><button class="ghost" id="refresh-users">Обновить</button></div>
+    <p class="hint">Список пользователей GiftMutant, включая ранее созданные кошельки. Регистрации MTT SPORTS учитываются отдельно.</p>
+    <label for="search" class="label">Поиск по Telegram ID или @username</label>
+    <input id="search" autocomplete="off" placeholder="ID или имя пользователя" maxlength="40">
+    <div id="users" class="accounts"></div>
+    <div class="pager"><button id="prev" class="ghost">Назад</button><span id="page-info">—</span><button id="next" class="ghost">Далее</button></div>
+   </section>
+   <section id="panel-settings" class="panel" hidden>
+    <h2>Реферальные отчисления</h2>
+    <p class="hint">Процент от полного объёма MTT в подтверждённом обмене. Уровень 1 — прямые приглашения, уровень 2 — приглашения ваших партнёров, уровень 3 — следующая линия.</p>
+    <form id="rates-form" class="form">
+     <div class="rate"><div><strong>Уровень 1</strong><span>Прямые приглашения</span></div><div class="percent"><input id="rate-1" inputmode="decimal" required aria-label="Процент первого уровня"><span>%</span></div></div>
+     <div class="rate"><div><strong>Уровень 2</strong><span>Вторая линия</span></div><div class="percent"><input id="rate-2" inputmode="decimal" required aria-label="Процент второго уровня"><span>%</span></div></div>
+     <div class="rate"><div><strong>Уровень 3</strong><span>Третья линия</span></div><div class="percent"><input id="rate-3" inputmode="decimal" required aria-label="Процент третьего уровня"><span>%</span></div></div>
+     <div class="example"><div class="meta">Пример: приглашённый меняет 100 000 MTT</div><div id="preview"></div></div>
+     <p class="hint">Ставки действуют для новых подтверждённых сделок. Ранее начисленные награды не пересчитываются. Общая ставка не может превышать 1%.</p>
+     <button type="submit" class="primary" id="save">Сохранить ставки</button>
+     <p id="save-state" class="status" role="status"></p>
+    </form>
+   </section>
+   <section id="panel-withdrawals" class="panel" hidden>
+    <div class="heading"><h2>Заявки на вывод</h2><button class="ghost" id="refresh-withdrawals">Обновить</button></div>
+    <p class="hint">Суммы зарезервированы во внутреннем учёте. Отправка MTT и пометка выплаты исполненной будут подключены только после проверки отдельного механизма перечислений.</p>
+    <div id="withdrawals"></div>
+   </section>
+  </div>
+  <footer>GiftMutant Staging · Доступ по подписанной сессии Telegram</footer>
+ </main>
+</body>
+</html>

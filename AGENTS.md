@@ -1,1 +1,3 @@
 GiftMutant staging Mini App. Read ../mtt-exchange-engine-staging/AGENTS.md. Edit ONLY staging UI. Quote must include service price, show full MTT debit and net USDT output. Check only changed tests. No production deployment or wallet keys.\n
+
+MTT Exchange collective project: `mtt-exchange` in Supabase `engineering_memory`. Read `https://github.com/tradeain8n/mtt-exchange-engine-staging/blob/main/docs/MTT_TEAM_CONTEXT.md` first. Roles: cm-frontend owns Mini App, mtt-codex implementation, mtt-antigravity cross-check, cm-reviewer independent acceptance, mtt-hermes coordinator. Production @babymttbot is distinct from staging @GiftMutantBot. Do not infer MTT SPORTS account from Yaako address or Telegram ID; keep real transfers out of autonomous staging work.

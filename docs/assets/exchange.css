@@ -306,3 +306,12 @@ body{background:radial-gradient(ellipse 80% 260px at 50% -90px,#153b7b66,transpa
 .swap-sell-review .action{margin-top:8px}
 
 .swap-route-note{background:#132640;border:1px solid #345479;border-radius:12px;padding:10px 12px;color:#a9c3e5;font-size:11px;line-height:1.5;margin:10px 0 5px}
+
+.swap-route-catalog{margin:7px 0 12px;border:1px solid #344869;border-radius:13px;background:#13213a;padding:8px 11px}
+.swap-route-catalog summary{color:#a8c4ed;font-size:12px;font-weight:700;cursor:pointer;padding:3px 0}
+.swap-route-list{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.swap-route-item{width:100%;min-height:42px;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;border:1px solid #365071;border-radius:10px;background:#192c49;text-align:left;color:#d6e7fb;font-size:11px;cursor:pointer}
+.swap-route-item strong{font-size:10px;white-space:nowrap;color:#b9cde7}
+.swap-route-item.live strong{color:#73e5bf}
+.swap-route-item.unfunded strong{color:#e7b49c}
+.swap-route-item:focus-visible{outline:2px solid #78a9ef}

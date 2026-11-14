@@ -62,7 +62,39 @@ async function refreshServerRoutes(){
    throw Error('routes_unavailable');
   liveRoutes=value;
  }catch{liveRoutes=null;}
- displayRouteStatus();setAction();
+ displayRouteStatus();
+ renderRouteCatalog();
+ setAction();
+}
+function renderRouteCatalog(){
+ const target=el('swap-route-list');target.replaceChildren();
+ if(!liveRoutes){
+  target.textContent='Не удалось обновить список. Повторите после восстановления связи.';
+  return;
+ }
+ const names={ton:'TON',bsc:'BSC',mtt:'MTT'};
+ for(const route of liveRoutes.routes){
+  const row=document.createElement('button');row.type='button';
+  row.className='swap-route-item '+route.mode;
+  const left=document.createElement('span');
+  left.textContent=route.fromToken+' · '+names[route.fromNetwork]+' → '+
+    route.toToken+' · '+names[route.toNetwork];
+  const right=document.createElement('strong');
+  right.textContent=route.mode==='live'?'Исполнение':route.mode==='preview'
+   ?'Котировка':'Нет резерва';
+  row.append(left,right);
+  row.title=routeReasons[route.reason]||route.reason;
+  row.addEventListener('click',()=>{
+   if(currentOrder){toast('Сначала завершите текущую заявку.');return;}
+   const changeToken=el('source-token').value!==route.fromToken;
+   el('source-token').value=route.fromToken;
+   el('network').value=route.fromNetwork;
+   el('destination-network').value=route.toNetwork;
+   syncSwapControls({changedToken:changeToken});
+   target.closest('details').open=false;
+  });
+  target.append(row);
+ }
 }
 const swapChoice=()=>exchangeRoute({
  inputToken:el('source-token').value,inputNetwork:el('network').value,

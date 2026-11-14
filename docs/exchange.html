@@ -7,10 +7,10 @@
 <meta name="robots" content="noindex,nofollow">
 <meta name="description" content="GiftMutant — обмен USDT на MTT и личный кошелёк BSC TON MTT">
 <link rel="icon" href="./icon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="./assets/exchange.css?v=12">
+<link rel="stylesheet" href="./assets/exchange.css?v=13">
 <title>GiftMutant · Обмен и кошелёк</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-<script type="module" src="./assets/exchange.js?v=12"></script>
+<script type="module" src="./assets/exchange.js?v=13"></script>
 </head>
 <body>
 <div class="shell">
@@ -67,9 +67,10 @@
         </div>
         <div class="swap-liquidity" aria-label="Доступная ликвидность MTT" aria-live="polite">
           <div><span>MTT для покупки</span><strong id="liquidity-mtt-buy">—</strong></div>
-          <div><span>MTT для продажи</span><strong id="liquidity-mtt-sell">—</strong></div>
+          <div><span>MTT для продажи через пул</span><strong id="liquidity-mtt-sell">—</strong></div>
         </div>
         <p id="swap-route-status" class="swap-route-note" aria-live="polite">Проверяем доступность маршрута по резервам…</p>
+        <details class="swap-route-catalog"><summary>Все маршруты TON · BSC · MTT</summary><div id="swap-route-list" class="swap-route-list" aria-live="polite"></div></details>
         <p id="swap-message" class="swap-feedback" role="status" aria-live="polite">Проверяем ваш кошелёк…</p>
         <p class="swap-limit-caption">Лимиты: от 0,01 до 20 USD в эквиваленте. Доступность исполнения зависит от маршрута.</p>
         <button id="swap-main" type="button" class="action action-primary" disabled>Проверяем обмен…</button>

@@ -14,7 +14,7 @@ export function parseUsdt(value) {
   if(!/^\d{1,5}(\.\d{0,6})?$/.test(normalized)) throw Error('Укажите корректную сумму USDT');
   const [whole,frac='']=normalized.split('.');
   const amount=BigInt(whole)*UNIT+BigInt((frac+'0'.repeat(18)).slice(0,18));
-  if(amount<UNIT/10n || amount>20n*UNIT)throw Error('В демо доступно от 0,1 до 20 USDT');
+  if(amount<UNIT/100n || amount>20n*UNIT)throw Error('В демо доступно от 0,01 до 20 USDT');
   return amount;
 }
 export function formatWei(value,digits=2) {

@@ -304,3 +304,5 @@ body{background:radial-gradient(ellipse 80% 260px at 50% -90px,#153b7b66,transpa
 .swap-sell-review h3{font-size:16px;color:#f0f5ff;margin:0 0 9px}
 .swap-sell-review p{font-size:12px;color:#b8cce7;overflow-wrap:anywhere;line-height:1.55}
 .swap-sell-review .action{margin-top:8px}
+
+.swap-route-note{background:#132640;border:1px solid #345479;border-radius:12px;padding:10px 12px;color:#a9c3e5;font-size:11px;line-height:1.5;margin:10px 0 5px}

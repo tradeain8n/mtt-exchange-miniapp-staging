@@ -26,6 +26,44 @@ let liveGiftmutantReadiness=null;
 let liquidityReading=false;
 let swapBalanceVersion=0,routeVersion=0,quoteDebounce=null;
 let sellDraft=null,sellBusy=false;
+let liveRoutes=null;
+const routeReasons={
+ pilot_exactly_3_usdt:'Пилот TON: исполнение доступно только на 3 USDT.',
+ ton_pilot_not_ready:'Резерв есть, но TON-пилот временно не принимает заявки.',
+ bsc_deposit_attribution_not_deployed:'Резерв MTT есть; приём BSC ещё требует подтверждения депозита.',
+ usdt_mtt_deposit_settlement_not_deployed:'Резерв MTT есть; автоматический приём USDT MTT ещё не подключён.',
+ mtt_native_amm_direct_customer_payout:'MTT → USDT MTT: прямой обмен через проверенный пул.',
+ ton_payout_signer_not_deployed:'USDT TON на центральном кошельке есть; выплата клиентам ещё не подключена.',
+ bsc_payout_treasury_empty_or_unverified:'USDT BSC на центральном кошельке отсутствует.',
+};
+function activeServerRoute(){
+ const choice=swapChoice();
+ return liveRoutes?.routes?.find(route=>route.fromNetwork===choice.inputNetwork&&
+  route.fromToken===choice.inputToken&&
+  route.toNetwork===choice.outputNetwork&&route.toToken===choice.outputToken)||null;
+}
+function displayRouteStatus(){
+ const target=el('swap-route-status');
+ const route=activeServerRoute();
+ if(!liveRoutes){target.textContent='Проверяем сетевые резервы…';return}
+ if(!route){target.textContent='Маршрут ещё не поддерживается.';return}
+ const prefix=route.mode==='live'?'● Исполнение подключено':route.mode==='preview'
+  ?'◷ Ликвидность есть · просмотр курса':'○ Резерв отсутствует';
+ target.textContent=prefix+' · '+(routeReasons[route.reason]||route.reason);
+}
+async function refreshServerRoutes(){
+ if(!gateway)return;
+ try{
+  const response=await fetch(gateway+'/api/giftmutant/routes',{
+   cache:'no-store',credentials:'omit',signal:AbortSignal.timeout(15000)
+  });
+  const value=await response.json();
+  if(!response.ok||value.ok!==true||!Array.isArray(value.routes))
+   throw Error('routes_unavailable');
+  liveRoutes=value;
+ }catch{liveRoutes=null;}
+ displayRouteStatus();setAction();
+}
 const swapChoice=()=>exchangeRoute({
  inputToken:el('source-token').value,inputNetwork:el('network').value,
  outputNetwork:el('destination-network').value,amount:el('amount').value
@@ -52,6 +90,7 @@ function syncSwapControls({changedToken=false}={}){
  el('sell-review').classList.add('hidden');
  sellDraft=null;
  updateRecipient();
+ displayRouteStatus();
  void refreshSwapBalances();
  scheduleQuote();
 }
@@ -106,7 +145,7 @@ async function sellRequest(action,values={}){
 const sellReason=e=>({
  backup_confirmation_required:'Подтвердите сохранение резервной фразы в разделе кошелька.',
  sell_insufficient_mtt:'Недостаточно MTT для обмена и комиссии.',
- sell_usd_limit_0_1_to_20:'Лимит продажи: от 0,10 до 20 USDT по текущему курсу.',
+ sell_usd_limit_0_01_to_20:'Лимит продажи: от 0,01 до 20 USDT по текущему курсу.',
  sell_pending_nonce:'Кошелёк ещё обрабатывает предыдущую транзакцию.',
  sell_already_pending:'Сначала проверьте предыдущую продажу.',
  sell_slippage_exceeded:'Цена изменилась. Запросите новую котировку.',
@@ -704,7 +743,8 @@ function setAction(){
  if(choice.quoteOnly){
   button.disabled=true;button.textContent='Маршрут: только котировка';return;
  }
- const permitted=choice.liveSell||liveGiftmutantReadiness?.accepting===true;
+ const permitted=(choice.liveSell||liveGiftmutantReadiness?.accepting===true)&&
+   activeServerRoute()?.executable===true;
  button.disabled=quoteLoading||!quoteReady||!permitted||!gateway||
   !tg?.initData||!wallet.evm||!wallet.ton;
  button.textContent=choice.liveSell?'Продать MTT':!permitted
@@ -716,7 +756,7 @@ async function refreshQuote(){
  if(!choice.valid){
   quoteReady=false;
   el('result').textContent='—';
-  el('quote-note').textContent='Лимиты: 0,10–20 USD';
+  el('quote-note').textContent='Лимиты: 0,01–20 USD';
   setFeedback(choice.reason,true);setAction();return;
  }
  quoteLoading=true;setAction();
@@ -943,6 +983,7 @@ async function bootSwap(){
   await getAuthenticatedWallet();
   void refreshBackupStatus();
   void refreshGiftmutantLiquidity();
+  await refreshServerRoutes();
   void refreshSwapBalances();
   try{
    const prior=await sellRequest('status');
@@ -1029,6 +1070,7 @@ window.setInterval(()=>{
  else if(!currentOrder)void refreshLiveReadiness();
 },15000);
 window.setInterval(()=>void refreshGiftmutantLiquidity(),20000);
+window.setInterval(()=>void refreshServerRoutes(),20000);
 window.setInterval(()=>{
  if(sellDraft&&['signing','signed','broadcast'].includes(sellDraft.state))
   void checkSellStatus();

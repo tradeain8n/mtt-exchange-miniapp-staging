@@ -4,7 +4,7 @@ export const EXCHANGE_NETWORKS=Object.freeze({
  bsc:{label:'BNB Smart Chain',tokens:['USDT']},
  mtt:{label:'MTT Network',tokens:['USDT','MTT']}
 });
-export const LIMITS=Object.freeze({minUsd:'0.1',maxUsd:'20'});
+export const LIMITS=Object.freeze({minUsd:'0.01',maxUsd:'20'});
 const re=/^(?:0|[1-9]\d*)(?:\.\d{1,18})?$/;
 export function parseInput(value){
  const text=String(value||'').trim().replace(',','.');
@@ -21,8 +21,8 @@ export function exchangeRoute({inputToken='USDT',inputNetwork='ton',outputNetwor
   return {valid:false,reason:'Токен назначения недоступен в выбранной сети.'};
  const amountNum=parseInput(amount);
  if(amountNum===null)return {valid:false,reason:'Введите положительную сумму.'};
- if(!sell&&(amountNum<0.1||amountNum>20))
-  return {valid:false,reason:'Лимит обмена: от 0,10 до 20 USDT.'};
+ if(!sell&&(amountNum<0.01||amountNum>20))
+  return {valid:false,reason:'Лимит обмена: от 0,01 до 20 USDT.'};
  const livePilot=!sell&&inputNetwork==='ton'&&outputNetwork==='mtt'&&amountNum===3;
  const liveSell=sell&&inputNetwork==='mtt'&&outputNetwork==='mtt';
  return {

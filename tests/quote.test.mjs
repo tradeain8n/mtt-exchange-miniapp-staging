@@ -18,7 +18,7 @@ test('larger trade increases price impact',()=>{
   assert.ok(large.impactBps>small.impactBps);
 });
 test('invalid input cannot become a quote',()=>{
-  for(const invalid of ['','-1','0.01','21','1e8','1.1234567','Infinity','0']){
+  for(const invalid of ['','-1','0.009','21','1e8','1.1234567','Infinity','0']){
     assert.throws(()=>parseUsdt(invalid));
   }
 });

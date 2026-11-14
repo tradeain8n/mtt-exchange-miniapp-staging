@@ -67,18 +67,35 @@
         <h2 class="swap-step-title">Оплата</h2>
         <div class="swap-checkout-amount"><strong>3 USD₮</strong><span>TON</span></div>
         <p id="swap-minimum-mtt" class="swap-minimum-mtt">Минимальную выплату проверяем…</p>
-        <div class="swap-payment-detail">
-          <span>Получатель TON</span>
-          <code id="swap-ton-recipient"></code>
-          <button id="swap-copy-ton" type="button" class="swap-copy">Копировать адрес</button>
+        <div class="swap-internal-wallet">
+          <span>Оплата из вашего кошелька</span>
+          <strong id="swap-internal-source">TON · GiftMutant</strong>
         </div>
-        <div class="swap-payment-detail">
-          <span>Комментарий платежа</span>
-          <code id="swap-payment-memo"></code>
-          <button id="swap-copy-memo" type="button" class="swap-copy">Копировать комментарий</button>
+        <details class="swap-manual-details">
+          <summary>Реквизиты заявки</summary>
+          <div class="swap-payment-detail">
+            <span>Центральный TON-адрес</span><code id="swap-ton-recipient"></code>
+            <button id="swap-copy-ton" type="button" class="swap-copy">Копировать адрес</button>
+          </div>
+          <div class="swap-payment-detail">
+            <span>Комментарий</span><code id="swap-payment-memo"></code>
+            <button id="swap-copy-memo" type="button" class="swap-copy">Копировать комментарий</button>
+          </div>
+        </details>
+        <p id="swap-internal-message" class="swap-payment-warning" aria-live="polite">
+          Подтвердите списание внутри GiftMutant. Переход в другой кошелёк не нужен.
+        </p>
+        <button id="swap-pay" type="button" class="action action-primary">Оплатить из GiftMutant</button>
+        <div id="swap-internal-review" class="hidden swap-internal-review">
+          <div><span>Списать</span><strong>3,00 USD₮ · TON</strong></div>
+          <div><span>Получатель</span><strong id="swap-internal-central"></strong></div>
+          <div><span>Комментарий</span><strong id="swap-internal-memo"></strong></div>
+          <div><span>Минимум для комиссии сети</span><strong>0,12 TON на кошельке</strong></div>
+          <button id="swap-pay-confirm" type="button" class="action action-primary">
+            Подтвердить списание 3 USD₮
+          </button>
+          <button id="swap-pay-cancel" type="button" class="action action-secondary">Назад</button>
         </div>
-        <p class="swap-payment-warning">Отправляйте только USD₮ TON. При ручном переводе обязательно укажите комментарий.</p>
-        <button id="swap-pay" type="button" class="action action-primary">Открыть TON-кошелёк</button>
         <button id="swap-pay-status" type="button" class="action action-secondary">Проверить оплату</button>
         <div class="swap-result-recipient">MTT поступят на <strong id="swap-evm-target"></strong></div>
       </div>

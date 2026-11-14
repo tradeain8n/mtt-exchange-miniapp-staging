@@ -73,7 +73,7 @@ test('checkout verifies order before showing native TON wallet payment link',()=
  assert.match(html,/id="swap-order-status"/);
  assert.match(js,/getAuthenticatedWallet/);
  assert.match(js,/assertPilotOrder/);
- assert.match(js,/linkForWallet/);
- assert.match(js,/https:\/\/app\.tonkeeper\.com\/transfer/);
+ assert.match(js,/previewInternalTonPayment/);
+ assert.match(js,/confirmInternalTonPayment/);
  assert.doesNotMatch(js,/sendViaWallet|eth_sendTransaction|sendTransaction\(/);
 });

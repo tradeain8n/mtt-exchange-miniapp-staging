@@ -27,7 +27,8 @@ test('minimal exchange has only amount, two networks, receiving wallet and real 
  assert.doesNotMatch(html,/ton-pilot-create|ton-preflight|route-state|steps|Пилот/);
  assert.match(js,/getAuthenticatedWallet/);
  assert.match(js,/pilotRequest/);
- assert.match(js,/app\.tonkeeper\.com\/transfer/);
+ assert.match(js,/internalTonPaymentRequest/);
+ assert.match(html,/id="swap-pay-confirm"/);
  assert.match(js,/refreshQuote/);
  assert.doesNotMatch(js,/privateKey|seedPhrase|sendTransaction|eth_sendTransaction/);
  assert.match(css,/\.swap-card-heading/);

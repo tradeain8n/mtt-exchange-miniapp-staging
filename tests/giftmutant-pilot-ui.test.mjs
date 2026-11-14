@@ -13,7 +13,8 @@ test('pilot UI uses TON wallet confirmation only, no private seed or keys',()=>{
  assert.match(page,/id="swap-main"/);
  assert.match(page,/id="swap-check-status"/);
  assert.match(js,/assertPilotOrder/);
- assert.match(js,/https:\/\/app\.tonkeeper\.com\/transfer/);
+ assert.match(js,/internalTonPaymentRequest/);
+ assert.match(js,/previewInternalTonPayment/);
  assert.match(js,/loadPilotStatus|swap-order-status/);
  assert.doesNotMatch(js,/centralPrivateKey|privateKey|seedPhrase/);
 });

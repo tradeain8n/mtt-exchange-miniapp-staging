@@ -1,4 +1,5 @@
 import {pilotRequest,assertPilotOrder} from './giftmutant-pilot.js';
+import {internalTonPaymentRequest} from './giftmutant-tonpay-client.js';
 import {mttSendRequest,validMttSendInput} from './mtt-send-client.js';
 import {loadChainPortfolio,NETWORKS_WALLET,explorerHistoryUrl} from './wallet-portfolio.js';
 import {parseUsdt,formatWei,fetchLiveReserves,calculateQuote} from './quote.js';
@@ -19,6 +20,7 @@ let nativeSendEnabled=false,nativeSendBusy=false,nativeSendIntent=null;
 let refreshSequence=0,toastTimer=null;
 let quoteReady=false,quoteLoading=false,placingOrder=false,currentOrder=null;
 let latestEstimate=null,lastQuoteAt=0;
+let internalTonPayment=null,internalTonBusy=false;
 let liveGiftmutantReadiness=null;
 const nameForState={
  awaiting_ton:'Ожидаем оплату',ton_confirmed:'Оплата получена',
@@ -411,24 +413,93 @@ const pilotError=error=>{
 function validatedOrder(value){
  return assertPilotOrder(value,wallet.evm,wallet.ton);
 }
-function linkForWallet(order){
- if(!order?.paymentUrl)return null;
- // TON's documented jetton deep link also supports the HTTPS Tonkeeper format.
- const link=order.paymentUrl.replace(/^ton:\/\/transfer\//,'https://app.tonkeeper.com/transfer/');
- const target=new URL(link);
- if(target.protocol!=='https:'||target.hostname!=='app.tonkeeper.com'||
-    !target.pathname.startsWith('/transfer/')||
-    target.searchParams.get('amount')!=='3000000'||
-    !target.searchParams.get('jetton')||
-    target.searchParams.get('text')!==order.memo)
-  throw Error('Неверные реквизиты оплаты');
- return target.href;
+function shortTon(value){
+ return value?value.slice(0,10)+'…'+value.slice(-8):'—';
 }
+async function tonPay(action,params={}){
+ if(!currentOrder)throw Error('ton_order_not_found');
+ return internalTonPaymentRequest({base:gateway,initData:tg?.initData,
+  orderId:currentOrder.id,action,...params});
+}
+function internalTonError(e){
+ const map={
+  insufficient_ton_usdt:'Недостаточно USD₮ TON для оплаты 3 USD₮.',
+  insufficient_ton_gas:'Не хватает TON для сетевой комиссии. Нужно минимум 0,12 TON.',
+  ton_order_expired:'Время оплаты истекло. Не переводите средства по этой заявке.',
+  ton_payment_already_requested:'Оплата уже отправлялась. Проверяем подтверждение.',
+  ton_order_already_processing:'Оплата уже обнаружена. Проверяем обмен.',
+  ton_payment_temporarily_unavailable:'Сеть TON временно недоступна. Повторно не отправляйте.',
+  backup_confirmation_required:'Сначала подтвердите сохранение резервной фразы кошелька.',
+  official_ton_usdt_wallet_not_found:'На кошельке не найден официальный USD₮ TON.',
+  ton_payment_confirmation_required:'Для оплаты требуется ваше подтверждение.'
+ };
+ return map[e.message]||'Не удалось выполнить оплату: '+
+  String(e.message||'ошибка').slice(0,75);
+}
+async function previewInternalTonPayment(){
+ if(internalTonBusy||!currentOrder||currentOrder.state!=='awaiting_ton')return;
+ internalTonBusy=true;el('swap-pay').disabled=true;
+ el('swap-internal-message').textContent='Проверяем баланс USD₮ TON…';
+ try{
+  const response=await tonPay('preview');
+  if(response.payment){
+   internalTonPayment=response.payment;
+   renderOrder(currentOrder);return;
+  }
+  if(!response.ready||response.summary.amountUsdt!=='3'||
+     response.summary.centralTon!==currentOrder.centralTon||
+     response.summary.memo!==currentOrder.memo||
+     response.summary.sourceTon!==currentOrder.sourceTon)
+   throw Error('ton_order_wallet_mismatch');
+  el('swap-internal-central').textContent=shortTon(currentOrder.centralTon);
+  el('swap-internal-memo').textContent=currentOrder.memo;
+  el('swap-internal-source').textContent=shortTon(currentOrder.sourceTon);
+  el('swap-internal-message').textContent='Доступно '+response.summary.balanceUsdt+
+   ' USD₮. Проверьте списание 3 USD₮ TON.';
+  el('swap-internal-review').classList.remove('hidden');
+  el('swap-pay').classList.add('hidden');
+ }catch(e){
+  el('swap-internal-message').textContent=internalTonError(e);
+ }finally{internalTonBusy=false;el('swap-pay').disabled=false;}
+}
+async function confirmInternalTonPayment(){
+ if(internalTonBusy||!currentOrder||currentOrder.state!=='awaiting_ton')return;
+ internalTonBusy=true;el('swap-pay-confirm').disabled=true;
+ el('swap-internal-message').textContent='Подписываем перевод в GiftMutant…';
+ try{
+  const response=await tonPay('confirm',{confirmation:'PAY_EXACTLY_3_USDT_TON'});
+  if(!response.payment||!['signed','submitted','confirmed'].includes(response.payment.state))
+   throw Error('ton_payment_temporarily_unavailable');
+  internalTonPayment=response.payment;
+  el('swap-internal-review').classList.add('hidden');
+  renderOrder(currentOrder);
+  await loadPilotStatus();
+ }catch(e){
+  el('swap-internal-message').textContent=internalTonError(e)+
+   ' Для проверки используйте «Проверить оплату».';
+  // On uncertain RPC outcomes never present another "pay" button silently.
+  await checkInternalTonPayment();
+ }finally{internalTonBusy=false;el('swap-pay-confirm').disabled=false;}
+}
+async function checkInternalTonPayment(){
+ if(!currentOrder||!gateway||!tg?.initData)return;
+ try{
+  const response=await tonPay('status');
+  if(response.payment){
+   internalTonPayment=response.payment;
+   if(['signed','submitted','confirmed'].includes(internalTonPayment.state))
+    renderOrder(currentOrder);
+  }
+ }catch{/* Old non-internal orders still use regular TON deposit verification. */}
+}
+
 function renderOrder(order){
  const data=validatedOrder(order);
  currentOrder=data;
  const payStage=data.state==='awaiting_ton'&&Boolean(data.paymentUrl)&&
    Math.floor(Date.now()/1000)<data.expiresAt;
+ const internalPending=internalTonPayment?.orderId===data.id&&
+   ['signed','submitted','confirmed'].includes(internalTonPayment.state);
  el('swap-minimum-mtt').textContent=
   data.minimumClientMttWei&&/^\d+$/.test(data.minimumClientMttWei)
    ?'Минимум к получению: '+formatWei(BigInt(data.minimumClientMttWei),2)+' MTT'
@@ -436,12 +507,14 @@ function renderOrder(order){
  el('swap-ton-recipient').textContent=data.centralTon;
  el('swap-payment-memo').textContent=data.memo;
  el('swap-evm-target').textContent=fmt(data.recipientEvm);
- if(payStage){
+ if(payStage&&!internalPending){
   showStage('swap-checkout');
  }else{
   showStage('swap-order-stage');
   el('swap-order-heading').textContent=nameForState[data.state]||'Проверяем обмен';
-  el('swap-order-status').textContent=data.state==='completed'
+  el('swap-order-status').textContent=internalPending&&data.state==='awaiting_ton'
+   ?'Внутренний перевод подписан. Проверяем подтверждение USD₮ TON.'
+   :data.state==='completed'
    ?'MTT перечислены на ваш личный EVM-адрес.'
    :data.state==='awaiting_ton'
     ?'Время заявки истекло. Не переводите деньги по старым реквизитам.'
@@ -462,7 +535,9 @@ async function loadPilotStatus(){
  try{
   const response=await pilotRequest({base:gateway,initData:tg.initData,action:'status'});
   if(response.order){
-   renderOrder(response.order);return response.order;
+   renderOrder(response.order);
+   if(response.order.state==='awaiting_ton')await checkInternalTonPayment();
+   return response.order;
   }
  }catch(error){
   if(currentOrder)el('swap-order-status').textContent=pilotError(error);
@@ -487,16 +562,6 @@ async function createOrder(){
  }catch(error){
   setFeedback(pilotError(error),true);
  }finally{placingOrder=false;setAction();}
-}
-async function openTonPayment(){
- if(!currentOrder||currentOrder.state!=='awaiting_ton')return;
- try{
-  const url=linkForWallet(currentOrder);
-  if(!url)throw Error('Срок оплаты истёк. Не отправляйте деньги.');
-  // User action opens an external TON wallet to authorize the actual payment.
-  if(tg?.openLink)tg.openLink(url);
-  else window.open(url,'_blank','noopener,noreferrer');
- }catch(error){toast(String(error.message||'Не удалось открыть TON-кошелёк'));}
 }
 async function copyText(value,label){
  if(!value)return;
@@ -526,19 +591,25 @@ el('swap-main').addEventListener('click',async()=>{
  if(!quoteReady)await refreshQuote();
  else await createOrder();
 });
-el('swap-pay').addEventListener('click',()=>void openTonPayment());
+el('swap-pay').addEventListener('click',()=>void previewInternalTonPayment());
+el('swap-pay-confirm').addEventListener('click',()=>void confirmInternalTonPayment());
+el('swap-pay-cancel').addEventListener('click',()=>{
+ el('swap-internal-review').classList.add('hidden');
+ el('swap-pay').classList.remove('hidden');
+});
 el('swap-back').addEventListener('click',()=>{
  showStage('swap-input-stage');
  setFeedback('Заявка сохранена. Для оплаты нажмите «Продолжить».');
 });
 el('swap-check-status').addEventListener('click',()=>void loadPilotStatus());
 el('swap-pay-status').addEventListener('click',async()=>{
+ await checkInternalTonPayment();
  const result=await loadPilotStatus();
  if(result?.state==='awaiting_ton')toast('Платёж пока не найден. Если уже отправили — повторите через минуту.');
 });
 el('swap-again').addEventListener('click',()=>{
  if(currentOrder?.state!=='completed')return;
- currentOrder=null;quoteReady=false;lastQuoteAt=0;
+ currentOrder=null;internalTonPayment=null;quoteReady=false;lastQuoteAt=0;
  showStage('swap-input-stage');void refreshQuote();
 });
 el('swap-show-payment').addEventListener('click',()=>renderOrder(currentOrder));
@@ -555,6 +626,9 @@ el('open-wallet-bot').addEventListener('click',openBot);
 updateRecipient();
 void bootSwap();
 window.setInterval(()=>{
- if(currentOrder&&currentOrder.state!=='completed')void loadPilotStatus();
+ if(currentOrder&&currentOrder.state!=='completed'){
+  void checkInternalTonPayment();
+  void loadPilotStatus();
+ }
  else if(!currentOrder)void refreshLiveReadiness();
 },15000);

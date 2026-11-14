@@ -241,3 +241,18 @@ body{background:radial-gradient(ellipse 80% 260px at 50% -90px,#153b7b66,transpa
 .wallet-send-status.error{color:#ffb3a9}
 .wallet-send-panel .action{margin-top:10px}
 .wallet-send-panel .action-secondary{min-height:44px}
+
+
+/* First-party TON payment: simple, clear, two-stage confirmation. */
+.swap-internal-wallet{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#142641;border:1px solid #2d5076;border-radius:15px;padding:15px;margin:17px 0 12px}
+.swap-internal-wallet span{font-size:12px;color:#96aed0}
+.swap-internal-wallet strong{font-size:12px;color:#d8ebff;overflow-wrap:anywhere;text-align:right}
+.swap-manual-details{margin:12px 0;color:#97b9e5;font-size:12px}
+.swap-manual-details summary{cursor:pointer;min-height:35px;padding:8px 0;list-style:none}
+.swap-manual-details summary::after{content:'⌄';margin-left:6px}
+.swap-internal-review{padding:15px;border:1px solid #34577e;background:#1b3050;border-radius:16px;margin-top:14px}
+.swap-internal-review>div{display:flex;justify-content:space-between;align-items:center;gap:10px;border-bottom:1px solid #344968;padding:11px 0}
+.swap-internal-review>div span{font-size:12px;color:#a3badc}
+.swap-internal-review>div strong{font-size:12px;color:#ecf6ff;text-align:right;overflow-wrap:anywhere}
+.swap-internal-review .action{margin-top:13px}
+.swap-internal-review .action-secondary{min-height:43px}

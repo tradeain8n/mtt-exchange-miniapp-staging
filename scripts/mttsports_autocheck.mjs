@@ -4,41 +4,21 @@ import {mkdirSync,writeFileSync,appendFileSync} from 'node:fs';
 
 const referral='https://mtt.xyz/?i=ba434b5a';
 
-/** Public named Mini App Play Now button discovered in Telegram's button metadata.
- * It is NOT the platform's affiliate URL, and there is no approved partner SSO.
- * Read-only diagnosis: no registration calls or user credentials.
- */
-export const nativePlayNow =
-  'https://t.me/MTTSPORTS_bot/MTTSPORTS?startapp=eyJwYXRoIjoiLyIsInBhcmFtcyI6e319';
-
-export function inspectReferralTransport(playNow=nativePlayNow, affiliateUrl=referral) {
-  let payload=null;
-  let nativeTargetValid=false;
-  try {
-    const u=new URL(playNow);
-    nativeTargetValid=u.protocol==='https:'&&u.hostname==='t.me'&&
-      u.pathname==='/MTTSPORTS_bot/MTTSPORTS';
-    const encoded=u.searchParams.get('startapp');
-    if(encoded&&encoded.length<2048)
-      payload=JSON.parse(Buffer.from(encoded,'base64url').toString('utf8'));
-  }catch{}
-  let officialReferralUrlValid=false;
-  try {
-    const u=new URL(affiliateUrl);
-    officialReferralUrlValid=u.protocol==='https:'&&u.hostname==='mtt.xyz'&&
-      u.searchParams.get('i')==='ba434b5a';
-  }catch{}
-  const nativeContainsOurCode=JSON.stringify(payload||{}).includes('ba434b5a');
-  return {
-    nativeTargetValid,
-    nativePayload:payload,
-    nativeContainsOurCode,
-    officialReferralUrlValid,
-    missingAffiliateAtGameLaunch:nativeTargetValid&&!nativeContainsOurCode,
-    firstSignupAttribution:'UNVERIFIED_BY_PLATFORM',
-    retroactiveLinking:'NOT_DOCUMENTED_OR_APPROVED',
-    recommendation:'NEW_USER_OPEN_OFFICIAL_AFFILIATE_URL_FIRST'
-  };
+// This diagnostic deliberately targets only the owner's MTT SPORTS referral URL.
+export function inspectReferralTransport(affiliateUrl=referral) {
+ let ok=false;
+ try {
+  const u=new URL(affiliateUrl);
+  ok=u.origin==='https://mtt.xyz'&&u.pathname==='/'&&
+    u.searchParams.size===1&&u.searchParams.get('i')==='ba434b5a';
+ }catch{}
+ return {
+  officialReferralUrlValid:ok,
+  usesThirdPartyBot:false,
+  firstSignupAttribution:'UNVERIFIED_BY_PLATFORM',
+  retroactiveLinking:'NOT_DOCUMENTED_OR_APPROVED',
+  recommendation:'NEW_USER_OPEN_OFFICIAL_AFFILIATE_URL_FIRST'
+ };
 }
 
 const source='3.3 USDT (TON)';
@@ -140,12 +120,11 @@ export function buildReport(){
  '|---|---|---|',
  rows,
  '',
- '## Диагностика Play Now — почему пользователь не появился в списке приглашений',
- '- Play Now: '+nativePlayNow,
- '- В startapp содержится {"path":"/","params":{}}: кода ba434b5a НЕТ.',
- '- В ссылке нашего партнёра '+referral+' код есть: официальный веб-клиент сам формирует приглашения через ?i=<invitationCode>.',
- '- Поэтому успешное Telegram SSO и успешная реферальная атрибуция — РАЗНЫЕ события.',
- '- Зарегистрированный сначала через Play Now пользователь может остаться без пригласившего; повторный визит по ?i=... НЕ ЯВЛЯЕТСЯ подтверждением переназначения.',
+ '## Проверка прямой реферальной ссылки',
+ '- Наш Play Now направляет только на '+referral+'.',
+ '- Никакие сторонние Telegram-боты не участвуют в маршруте.',
+ '- Параметр i в публичном URL сам по себе не подтверждает серверную атрибуцию.',
+ '- Успешный вход и появление в списке приглашённых — разные события.',
  '- Нулевые комиссионные без покупок возможны даже при правильной привязке: доход не равен количеству приглашённых.',
  '- Для изменения/проверки уже созданной привязки нужен оператор MTT SPORTS или авторизованный партнёрский API.',
  '',
@@ -175,9 +154,9 @@ export function buildReport(){
 }
 async function main(){
  const launch=inspectReferralTransport();
- record('Detected: Play Now named Mini App is not an affiliate link',
-   launch.missingAffiliateAtGameLaunch&&launch.officialReferralUrlValid,
-   'RISK: Play Now startapp carries no ba434b5a; first signup may be un-attributed');
+ record('Direct official referral URL only',
+   launch.officialReferralUrlValid&&!launch.usesThirdPartyBot,
+   'Destination mtt.xyz/?i=ba434b5a; no other Telegram bot');
  record('MTT SPORTS affiliate credit from a real account',false,
    'NOT VERIFIED: no partner callback or read access to MTT SPORTS promoter cabinet',
    false);
@@ -186,7 +165,6 @@ async function main(){
   'Attribution query i=ba434b5a; actual referral credit is unverified');
  await publicGet(referral,'MTT SPORTS referral landing page','mtt.xyz');
  await publicGet('https://sports.mtt.xyz/','MTT SPORTS game web app','sports.mtt.xyz');
- await publicGet('https://t.me/MTTSPORTS_bot','Сторонний промо-бот @MTTSPORTS_bot: публичная страница','t.me');
  await publicGet('https://account.yaako.io/oauth2/login','Yaako public login','account.yaako.io');
  await readChain();
  await supabaseAuthBoundary();

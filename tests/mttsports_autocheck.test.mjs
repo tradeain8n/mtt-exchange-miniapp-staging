@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {buildReport,verifyOfficialReferralLanding,inspectReferralTransport,nativePlayNow} from '../scripts/mttsports_autocheck.mjs';
+import {buildReport,verifyOfficialReferralLanding,inspectReferralTransport} from '../scripts/mttsports_autocheck.mjs';
 test('report states amount, recipient and SSO/quote limitations',()=>{
  const result=buildReport();
  assert.match(result,/3\.3 USDT \(TON\)/);
@@ -20,20 +20,16 @@ test('real public referral success requires correct final query and HTML',()=>{
  assert.equal(verifyOfficialReferralLanding({...base,contentType:'application/json'}),false);
 });
 
-test('Telegram Play Now payload omits the real affiliate while our official signup URL contains it',()=>{
+test('official referral is sole signup route and report makes no attribution claims',()=>{
  const d=inspectReferralTransport();
- assert.equal(d.nativeTargetValid,true);
- assert.deepEqual(d.nativePayload,{path:'/',params:{}});
- assert.equal(d.nativeContainsOurCode,false);
  assert.equal(d.officialReferralUrlValid,true);
- assert.equal(d.missingAffiliateAtGameLaunch,true);
+ assert.equal(d.usesThirdPartyBot,false);
  assert.equal(d.firstSignupAttribution,'UNVERIFIED_BY_PLATFORM');
- assert.equal(d.retroactiveLinking,'NOT_DOCUMENTED_OR_APPROVED');
- assert.match(buildReport(),/почему пользователь не появился/);
- assert.match(buildReport(),/РАЗНЫЕ события/);
+ assert.match(buildReport(),/Никакие сторонние Telegram-боты не участвуют/);
+ assert.doesNotMatch(buildReport(),/t[.]me[/]MTTSPORTS_bot/);
 });
-
-test('unexpected host or fake referral is rejected in read-only transport diagnosis',()=>{
- assert.equal(inspectReferralTransport('https://example.com/', 'https://mtt.xyz/?i=ba434b5a').nativeTargetValid,false);
- assert.equal(inspectReferralTransport(nativePlayNow,'https://mtt.xyz/?i=cd042562').officialReferralUrlValid,false);
+test('unexpected host and competing referral code are rejected',()=>{
+ assert.equal(inspectReferralTransport('https://example.com/?i=ba434b5a').officialReferralUrlValid,false);
+ assert.equal(inspectReferralTransport('https://mtt.xyz/?i=cd042562').officialReferralUrlValid,false);
+ assert.equal(inspectReferralTransport('https://mtt.xyz/?i=ba434b5a&startapp=x').officialReferralUrlValid,false);
 });

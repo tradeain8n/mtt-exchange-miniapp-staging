@@ -28,3 +28,10 @@ test('connected state requires verified provider proof, otherwise not linked',()
  assert.match(page,/self_reported/);
  assert.doesNotMatch(page,/mttmail|Gmail OAuth/i);
 });
+
+test('connect UI never opens a third-party Telegram bot',()=>{
+ const html=readFileSync(new URL('../docs/mttsports-connect.html',import.meta.url),'utf8');
+ assert.equal(html.includes('t.me/MTTSPORTS_bot'),false);
+ assert.equal(html.includes('startapp='),false);
+ assert.match(html,/https:\/\/mtt\.xyz\/\?i=ba434b5a/);
+});

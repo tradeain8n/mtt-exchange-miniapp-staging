@@ -69,12 +69,12 @@ const $=id=>document.getElementById(id);
 const tg=window.Telegram?.WebApp;
 try{tg?.ready();tg?.expand()}catch{}
 let record=null;
-try{record=JSON.parse(sessionStorage.getItem(KEY)||'null')}catch{}
+try{record=JSON.parse(localStorage.getItem(KEY)||'null')}catch{}
 if(!record||typeof record.id!=='string'||!Array.isArray(record.events)||Date.now()-record.created>8*60*60*1000){
 record={id:crypto.randomUUID(),created:Date.now(),consent:false,events:[]};
 }
 let pending=Promise.resolve();
-const save=()=>{try{sessionStorage.setItem(KEY,JSON.stringify(record))}catch{}};
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(record))}catch{}};
 const render=()=>{
   $('consent').checked=record.consent;
   $('open').disabled=!record.consent;
@@ -103,6 +103,7 @@ function note(event){
 if(record.events.length===0)note('page_opened');
 if(tg?.initData && !record.events.some(x=>x.event_name==='telegram_context_detected'))note('telegram_context_detected');
 if(!record.events.some(x=>x.event_name==='ready_screen_visible'))note('ready_screen_visible');
+if(record.consent)for(const e of record.events.filter(x=>!x.synced))pending=pending.then(()=>transmit(e));
 $('consent').addEventListener('change',()=>{
   if(!$('consent').checked){record.consent=false;save();render();return;}
   record.consent=true;save();

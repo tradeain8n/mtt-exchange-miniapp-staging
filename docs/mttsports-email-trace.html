@@ -71,7 +71,12 @@ try{tg?.ready();tg?.expand()}catch{}
 let record=null;
 try{record=JSON.parse(localStorage.getItem(KEY)||'null')}catch{}
 if(!record||typeof record.id!=='string'||!Array.isArray(record.events)||Date.now()-record.created>8*60*60*1000){
-record={id:crypto.randomUUID(),created:Date.now(),consent:false,events:[]};
+const id=typeof crypto.randomUUID==='function'?crypto.randomUUID():(()=>{
+ const bytes=crypto.getRandomValues(new Uint8Array(16));bytes[6]=(bytes[6]&15)|64;bytes[8]=(bytes[8]&63)|128;
+ const h=[...bytes].map(v=>v.toString(16).padStart(2,'0')).join('');
+ return h.slice(0,8)+'-'+h.slice(8,12)+'-'+h.slice(12,16)+'-'+h.slice(16,20)+'-'+h.slice(20);
+})();
+record={id,created:Date.now(),consent:false,events:[]};
 }
 let pending=Promise.resolve();
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(record))}catch{}};
@@ -90,7 +95,8 @@ async function transmit(e){
  try{
   const r=await fetch(API,{method:'POST',mode:'cors',headers:{'content-type':'application/json'},
     body:JSON.stringify({flow_id:record.id,sequence:e.seq,event_name:e.event_name}),
-    credentials:'omit',cache:'no-store',keepalive:true,signal:AbortSignal.timeout(8000)});
+    credentials:'omit',cache:'no-store',keepalive:true,
+    ...(typeof AbortSignal.timeout==='function'?{signal:AbortSignal.timeout(8000)}:{})});
   if(r.ok){e.synced=true;save();render();}
  }catch{/* Local journal remains available for manual export. */}
 }

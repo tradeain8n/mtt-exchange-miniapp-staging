@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#101827">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' https://telegram.org 'unsafe-inline'; style-src 'unsafe-inline'; connect-src https://lisysjunbaxyjieuwpxf.supabase.co; base-uri 'none'; form-action 'none'; frame-ancestors 'none'">
+<title>MTT Exchange · Email-регистрация</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root {color-scheme:dark;--bg:#101827;--panel:#1c2a40;--line:#354966;--txt:#f3f7ff;--muted:#b2c6df;--accent:#65e8bb}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--txt);font:16px/1.48 -apple-system,BlinkMacSystemFont,system-ui,sans-serif;min-height:100dvh;padding:calc(22px + env(safe-area-inset-top)) 16px calc(25px + env(safe-area-inset-bottom))}
+main{max-width:470px;margin:0 auto}h1{font-size:24px;line-height:1.17;margin:12px 0}h2{font-size:18px;margin:0 0 8px}p{margin:8px 0;color:var(--muted)}.head{padding:3px 4px 16px}.tag{display:inline-block;background:#24483c;color:#a2f9d4;border-radius:40px;padding:5px 11px;font-size:12px;font-weight:700;letter-spacing:.04em}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:17px;padding:18px;margin:13px 0}.small{font-size:13px;color:var(--muted)}.line{border-top:1px solid var(--line);margin:15px 0}.step{display:flex;align-items:center;gap:12px;margin-bottom:9px}.num{background:#2d5165;color:#e3fffe;display:grid;place-items:center;width:30px;height:30px;border-radius:50%;font-size:14px;font-weight:700}.btn{width:100%;border:0;background:var(--accent);color:#05291c;padding:16px;border-radius:12px;font-size:16px;font-weight:750;cursor:pointer;text-align:center;text-decoration:none;display:block;margin:11px 0}.btn:disabled{opacity:.45;cursor:not-allowed}.alt{background:#2e455f;color:#f3f7ff}.warn{border-left:3px solid #f0c37c;padding-left:12px}.check{display:flex;align-items:flex-start;gap:11px;color:#e3eefb}.check input{width:19px;height:19px;margin-top:4px;accent-color:var(--accent);flex:0 0 19px}.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.actions button{padding:12px 8px;border-radius:11px;background:#30455e;border:1px solid #58718f;color:var(--txt);font-size:13px;font-weight:650;min-height:48px}.status{font-variant-numeric:tabular-nums;overflow-wrap:anywhere;padding:10px;background:#122137;border-radius:10px}.mono{font:12px/1.5 ui-monospace,Menlo,monospace;overflow-wrap:anywhere}button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid #9dfddd;outline-offset:2px}[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<main>
+<header class="head">
+<span class="tag">MTT EXCHANGE · КОНТРОЛИРУЕМЫЙ ТЕСТ</span>
+<h1>Регистрация MTT SPORTS через Email</h1>
+<p>Откроем официальный сайт по вашему реферальному коду и зафиксируем этапы. Почту и код подтверждения вводите только на MTT SPORTS.</p>
+</header>
+<section class="box" aria-label="Подготовка">
+<div class="step"><span class="num">1</span><h2>Подготовка на iPhone</h2></div>
+<p>Код приглашения: <b>ba434b5a</b>. Журнал фиксирует только названия событий и время. Он не получает ваш email, код из письма, cookie или игровой токен.</p>
+<p class="small warn"><b>Важно:</b> переходы и запросы внутри сайта MTT SPORTS технически недоступны для нашего скрипта. После возвращения в Telegram отмечайте результат кнопками ниже. Такие отметки не равны подтверждению сервером.</p>
+<div class="line"></div>
+<label class="check"><input type="checkbox" id="consent"><span>Согласен на отправку технических отметок без персональных данных в исследовательский журнал MTT Exchange.</span></label>
+<div id="readyText" class="status small" aria-live="polite">Ждём вашего согласия. Никаких регистраций не выполняется.</div>
+</section>
+<section class="box">
+<div class="step"><span class="num">2</span><h2>Открыть регистрацию</h2></div>
+<p>При нажатии откроется <b>mtt.xyz/?i=ba434b5a</b>. Введите ранее не зарегистрированный email и код из письма непосредственно на официальном сайте.</p>
+<button class="btn" id="open" disabled>Открыть MTT SPORTS →</button>
+<a class="small" id="fallback" href="https://mtt.xyz/?i=ba434b5a" target="_blank" rel="noopener noreferrer" hidden>Открыть ссылку вручную, если Telegram не открыл сайт</a>
+</section>
+<section class="box" id="after" hidden>
+<div class="step"><span class="num">3</span><h2>Отметить результат</h2></div>
+<p>Вернитесь в это окно Telegram. Отметки записывают ваш ответ, а не содержимое писем или игровых данных.</p>
+<div class="actions">
+<button data-event="user_marked_code_requested">✉️ Запросил код</button>
+<button data-event="user_marked_code_received">📨 Код получил</button>
+<button data-event="user_marked_registered">✅ Вход прошёл</button>
+<button data-event="user_marked_uid_seen">👤 UID увидел</button>
+<button data-event="user_marked_referral_unknown">🔎 Реферал не проверен</button>
+<button data-event="user_marked_login_failed">⚠️ Ошибка входа</button>
+</div>
+<button class="btn alt" id="finish">Завершить и сохранить журнал</button>
+</section>
+<section class="box">
+<h2>Журнал тестирования</h2>
+<p class="status small" id="journalState" aria-live="polite">Инициализация…</p>
+<div id="events" class="mono" aria-label="Технические отметки"></div>
+<button class="btn alt" id="export">Скопировать безопасный отчёт</button>
+<p class="small">Отчёт содержит ID эксперимента, названия событий, время и статус синхронизации. Не содержит email или OTP. Локальные отметки остаются на вашем телефоне.</p>
+</section>
+</main>
+<script>
+'use strict';
+(()=>{
+const API='https://lisysjunbaxyjieuwpxf.supabase.co/functions/v1/mtt-email-journey';
+const OFFICIAL='https://mtt.xyz/?i=ba434b5a';
+const KEY='mtt_email_pilot_v1';
+const MAX=40;
+const $=id=>document.getElementById(id);
+const tg=window.Telegram?.WebApp;
+try{tg?.ready();tg?.expand()}catch{}
+let record=null;
+try{record=JSON.parse(sessionStorage.getItem(KEY)||'null')}catch{}
+if(!record||typeof record.id!=='string'||!Array.isArray(record.events)||Date.now()-record.created>8*60*60*1000){
+record={id:crypto.randomUUID(),created:Date.now(),consent:false,events:[]};
+}
+let pending=Promise.resolve();
+const save=()=>{try{sessionStorage.setItem(KEY,JSON.stringify(record))}catch{}};
+const render=()=>{
+  $('consent').checked=record.consent;
+  $('open').disabled=!record.consent;
+  $('readyText').textContent=record.consent?'Готово. Сценарий запущен; можно открывать MTT SPORTS.':'Ждём согласия. Email не запрашивается.';
+  $('after').hidden=!record.events.some(x=>x.event_name==='official_link_tapped');
+  const ok=record.events.filter(x=>x.synced).length;
+  $('journalState').textContent='Эксперимент '+record.id.slice(0,8)+' · записей '+record.events.length+' · синхронизировано '+ok;
+  $('events').textContent=record.events.slice(-9).map(x=>new Date(x.at).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit',second:'2-digit'})+
+    '  '+x.event_name+(x.synced?' ✓':' ⏳')).join('\n')||'События пока не записаны';
+};
+async function transmit(e){
+ if(!record.consent)return;
+ try{
+  const r=await fetch(API,{method:'POST',mode:'cors',headers:{'content-type':'application/json'},
+    body:JSON.stringify({flow_id:record.id,sequence:e.seq,event_name:e.event_name}),
+    credentials:'omit',cache:'no-store',keepalive:true,signal:AbortSignal.timeout(8000)});
+  if(r.ok){e.synced=true;save();render();}
+ }catch{/* Local journal remains available for manual export. */}
+}
+function note(event){
+ if(record.events.length>=MAX)return;
+ const e={seq:record.events.length+1,event_name:event,at:new Date().toISOString(),synced:false};
+ record.events.push(e);save();render();
+ if(record.consent)pending=pending.then(()=>transmit(e));
+}
+if(record.events.length===0)note('page_opened');
+if(tg?.initData && !record.events.some(x=>x.event_name==='telegram_context_detected'))note('telegram_context_detected');
+if(!record.events.some(x=>x.event_name==='ready_screen_visible'))note('ready_screen_visible');
+$('consent').addEventListener('change',()=>{
+  if(!$('consent').checked){record.consent=false;save();render();return;}
+  record.consent=true;save();
+  for(const e of record.events.filter(x=>!x.synced))pending=pending.then(()=>transmit(e));
+  note('consent_confirmed');render();
+});
+$('open').addEventListener('click',()=>{
+ if(!record.consent)return;
+ note('official_link_tapped');
+ $('fallback').hidden=false;
+ try{if(tg?.openLink){tg.openLink(OFFICIAL,{try_instant_view:false});return;}}catch{}
+ const w=window.open(OFFICIAL,'_blank','noopener,noreferrer');
+ if(!w)location.href=OFFICIAL;
+});
+let hidden=false;
+document.addEventListener('visibilitychange',()=>{
+ if(document.hidden&&!hidden){hidden=true;note('app_backgrounded');}
+ if(!document.hidden&&hidden){hidden=false;note('app_returned');}
+});
+for(const b of document.querySelectorAll('[data-event]'))b.addEventListener('click',()=>{
+ if(record.consent)note(b.dataset.event);
+});
+$('finish').addEventListener('click',()=>{if(record.consent)note('user_marked_finished');});
+const report=()=>JSON.stringify({version:'mtt-email-pilot-v1',flowId:record.id,
+  source:'client_reported_only',referralCode:'ba434b5a',events:record.events.map(({seq,event_name,at,synced})=>
+    ({seq,event_name,at,synced}))},null,2);
+$('export').addEventListener('click',async()=>{
+ if(record.consent)note('export_requested');
+ try{await navigator.clipboard.writeText(report());$('journalState').textContent='Безопасный отчёт скопирован. '+record.id.slice(0,8);}
+ catch{const a=document.createElement('textarea');a.value=report();document.body.append(a);a.select();document.execCommand('copy');a.remove();$('journalState').textContent='Отчёт скопирован (резервный способ).';}
+});
+render();
+})();
+</script>
+</body>
+</html>

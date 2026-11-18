@@ -7,7 +7,7 @@
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#101827">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' https://telegram.org 'unsafe-inline'; style-src 'unsafe-inline'; connect-src https://lisysjunbaxyjieuwpxf.supabase.co; base-uri 'none'; form-action 'none'; frame-ancestors 'none'">
-<title>MTT Exchange · Email-регистрация</title>
+<title>MTT Exchange · Email и Google внутри Telegram</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
 :root {color-scheme:dark;--bg:#101827;--panel:#1c2a40;--line:#354966;--txt:#f3f7ff;--muted:#b2c6df;--accent:#65e8bb}
@@ -20,8 +20,8 @@ main{max-width:470px;margin:0 auto}h1{font-size:24px;line-height:1.17;margin:12p
 <main>
 <header class="head">
 <span class="tag">MTT EXCHANGE · КОНТРОЛИРУЕМЫЙ ТЕСТ</span>
-<h1>Регистрация MTT SPORTS через Email</h1>
-<p>Откроем официальный сайт по вашему реферальному коду и зафиксируем этапы. Почту и код подтверждения вводите только на MTT SPORTS.</p>
+<h1>MTT SPORTS внутри Telegram · Email / Google</h1>
+<p>Новый тест без открытия Safari: попробуем перейти на официальный MTT SPORTS в том же окне Telegram. Email и код подтверждения вводите только на официальном сайте.</p>
 </header>
 <section class="box" aria-label="Подготовка">
 <div class="step"><span class="num">1</span><h2>Подготовка на iPhone</h2></div>
@@ -33,9 +33,20 @@ main{max-width:470px;margin:0 auto}h1{font-size:24px;line-height:1.17;margin:12p
 </section>
 <section class="box">
 <div class="step"><span class="num">2</span><h2>Открыть регистрацию</h2></div>
-<p>При нажатии откроется <b>mtt.xyz/?i=ba434b5a</b>. Введите ранее не зарегистрированный email и код из письма непосредственно на официальном сайте.</p>
-<button class="btn" id="open" disabled>Открыть MTT SPORTS →</button>
-<a class="small" id="fallback" href="https://mtt.xyz/?i=ba434b5a" target="_blank" rel="noopener noreferrer" hidden>Открыть ссылку вручную, если Telegram не открыл сайт</a>
+<p>Оба варианта ведут к <b>mtt.xyz/?i=ba434b5a</b> в текущем WebView. Метод входа выбирается уже на сайте MTT SPORTS. Google может требовать Safari по правилам OAuth.</p>
+<button class="btn" id="open" disabled>✉️ Email · внутри Telegram</button>
+<button class="btn alt" id="openGoogle" disabled>Google · внутри Telegram (тест)</button>
+<p class="small">Обе кнопки запускают одно и то же официальное реферальное приглашение. Разница — выбранный сценарий теста. Это ещё не собственный OAuth-клиент MTT Exchange.</p>
+<a class="small" id="fallback" href="https://mtt.xyz/?i=ba434b5a" hidden>Открыть ссылку вручную в том же окне</a>
+</section>
+<section class="box">
+<h2>Прототип будущего Email SDK v2</h2>
+<p>Интерфейс MTT Exchange для регистрации без перехода на сайт. Пока проверяется только формат email — запрос кода и регистрация через API намеренно не включены до подтверждения реферальной привязки.</p>
+<label class="small" for="emailDraft">Email (не сохраняется и никому не отправляется)</label>
+<input type="email" autocomplete="email" id="emailDraft" placeholder="your@email.com" maxlength="254"
+ style="width:100%;min-height:46px;padding:12px;border:1px solid #66829d;border-radius:10px;background:#0c1a2b;color:white;margin:9px 0">
+<button class="btn alt" id="emailPreview">Проверить формат локально</button>
+<p class="small" id="emailPreviewResult" aria-live="polite">Отправка кода появится после проверки SDK и разрешённого способа привязки реферала.</p>
 </section>
 <section class="box" id="after" hidden>
 <div class="step"><span class="num">3</span><h2>Отметить результат</h2></div>
@@ -47,6 +58,11 @@ main{max-width:470px;margin:0 auto}h1{font-size:24px;line-height:1.17;margin:12p
 <button data-event="user_marked_uid_seen">👤 UID увидел</button>
 <button data-event="user_marked_referral_unknown">🔎 Реферал не проверен</button>
 <button data-event="user_marked_login_failed">⚠️ Ошибка входа</button>
+<button data-event="user_marked_stayed_in_telegram">📱 Осталось в Telegram</button>
+<button data-event="user_marked_opened_safari">🌐 Открылся Safari</button>
+<button data-event="user_marked_google_success">Google вход выполнен</button>
+<button data-event="user_marked_referral_found">👥 Реферал появился</button>
+<button data-event="user_marked_referral_missing">Реферал не появился</button>
 </div>
 <button class="btn alt" id="finish">Завершить и сохранить журнал</button>
 </section>
@@ -83,6 +99,7 @@ const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(record))}catch{}};
 const render=()=>{
   $('consent').checked=record.consent;
   $('open').disabled=!record.consent;
+  $('openGoogle').disabled=!record.consent;
   $('readyText').textContent=record.consent?'Готово. Сценарий запущен; можно открывать MTT SPORTS.':'Ждём согласия. Email не запрашивается.';
   $('after').hidden=!record.events.some(x=>x.event_name==='official_link_tapped');
   const ok=record.events.filter(x=>x.synced).length;
@@ -116,13 +133,26 @@ $('consent').addEventListener('change',()=>{
   for(const e of record.events.filter(x=>!x.synced))pending=pending.then(()=>transmit(e));
   note('consent_confirmed');render();
 });
-$('open').addEventListener('click',()=>{
+// A top-level navigation inside the SAME WebView. Telegram/Google may still
+// independently move authentication into Safari; report that outcome afterward.
+function navigateInCurrentWebView(method) {
  if(!record.consent)return;
+ record.intent=method;save();
  note('official_link_tapped');
+ note('inapp_navigation_requested');
  $('fallback').hidden=false;
- try{if(tg?.openLink){tg.openLink(OFFICIAL,{try_instant_view:false});return;}}catch{}
- const w=window.open(OFFICIAL,'_blank','noopener,noreferrer');
- if(!w)location.href=OFFICIAL;
+ window.location.assign(OFFICIAL);
+}
+$('open').addEventListener('click',()=>navigateInCurrentWebView('email'));
+$('openGoogle').addEventListener('click',()=>navigateInCurrentWebView('google'));
+$('emailPreview').addEventListener('click',()=>{
+ const input=$('emailDraft'),email=input.value.trim();
+ const valid=email.length<=254&&/^[^\s@]{1,64}@[^\s@]{1,190}\.[a-zA-Z]{2,}$/.test(email);
+ $('emailPreviewResult').textContent=valid?
+   'Формат корректен. Email не отправлен; официальный запрос кода появится в SDK v2.':
+   'Проверьте формат Email. В настоящий момент данные никуда не отправляются.';
+ if(record.consent)note('sdk_email_preview_opened');
+ input.value=''; // no durable email capture, including localStorage
 });
 let hidden=false;
 document.addEventListener('visibilitychange',()=>{
@@ -134,7 +164,7 @@ for(const b of document.querySelectorAll('[data-event]'))b.addEventListener('cli
 });
 $('finish').addEventListener('click',()=>{if(record.consent)note('user_marked_finished');});
 const report=()=>JSON.stringify({version:'mtt-email-pilot-v1',flowId:record.id,
-  source:'client_reported_only',referralCode:'ba434b5a',events:record.events.map(({seq,event_name,at,synced})=>
+  source:'client_reported_only',navigation:'same_webview_assign',intent:record.intent??'none',referralCode:'ba434b5a',events:record.events.map(({seq,event_name,at,synced})=>
     ({seq,event_name,at,synced}))},null,2);
 $('export').addEventListener('click',async()=>{
  if(record.consent)note('export_requested');
